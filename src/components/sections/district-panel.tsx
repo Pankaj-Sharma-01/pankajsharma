@@ -30,7 +30,7 @@ export function DistrictPanel({ district }: DistrictPanelProps) {
       <h2
         id={headingId}
         data-text={district.label}
-        className="glitch w-fit font-mono text-3xl font-bold tracking-tight uppercase sm:text-4xl"
+        className="glitch w-fit font-display text-2xl uppercase sm:text-3xl"
       >
         {district.label}
       </h2>
@@ -42,7 +42,7 @@ export function DistrictPanel({ district }: DistrictPanelProps) {
           {district.stats.map((stat) => (
             <div key={stat.label} className="bg-background/90 px-3 py-2.5">
               <dt className="hud-label">{stat.label}</dt>
-              <dd className="text-glow-sun mt-1 truncate font-mono text-base font-semibold text-sun">
+              <dd className="text-glow-sun mt-1 font-mono text-base font-semibold break-words text-sun">
                 {stat.value}
               </dd>
             </div>

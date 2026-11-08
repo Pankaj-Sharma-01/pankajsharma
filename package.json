@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/check-pictures.mjs && next build",
+    "build": "node scripts/check-pictures.mjs && next build && node scripts/strip-local-fonts.mjs",
     "preview": "npx --yes serve@14 out",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",

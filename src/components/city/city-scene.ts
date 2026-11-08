@@ -362,7 +362,7 @@ function createLabelTexture(text: string, color: string, fontFamily: string) {
   canvas.height = 160;
   const context = canvas.getContext("2d");
   if (context) {
-    context.font = `700 64px ${fontFamily}`;
+    context.font = `400 56px ${fontFamily}`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.shadowColor = color;
