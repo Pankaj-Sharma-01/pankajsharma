@@ -93,6 +93,7 @@ All content lives in typed files in `src/data/`. Each list starts empty, and its
 | About           | `src/data/about.ts`       | Bio paragraphs, focus areas, interests                   |
 | Work Experience | `src/data/experience.ts`  | Most recent first; omit `end` for a current role         |
 | Education       | `src/data/education.ts`   | Most recent first                                        |
+| Projects        | `src/data/projects.ts`    | Grouped as `production` or `personal`; optional headline `metric` and `url` |
 | Books           | `src/data/books.ts`       | `status`: `reading`, `read`, or `to-read`                |
 | Thoughts        | `src/data/thoughts.ts`    | Sorted newest first automatically; `slug` makes `#anchor` links |
 | Pictures        | `src/data/pictures.ts`    | See [Adding pictures](#adding-pictures)                  |

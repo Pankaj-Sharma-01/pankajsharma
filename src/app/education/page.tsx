@@ -3,7 +3,8 @@ import { TimelineEntry } from "@/components/sections/timeline-entry";
 import { BulletList } from "@/components/ui/bullet-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
-import { education } from "@/data/education";
+import { Section } from "@/components/ui/section";
+import { academicHighlights, education } from "@/data/education";
 import { formatPeriod } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
 import { sectorLabel } from "@/lib/sectors";
@@ -35,6 +36,12 @@ export default function EducationPage() {
           ))}
         </div>
       )}
+
+      {academicHighlights.length > 0 ? (
+        <Section id="highlights" title="Scores & awards">
+          <BulletList items={academicHighlights} />
+        </Section>
+      ) : null}
     </Container>
   );
 }

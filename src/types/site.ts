@@ -18,5 +18,6 @@ export type SiteConfig = {
   links: {
     github: ExternalLink;
     linkedin: ExternalLink;
+    x: ExternalLink;
   };
 };

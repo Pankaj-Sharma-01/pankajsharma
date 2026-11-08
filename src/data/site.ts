@@ -6,10 +6,10 @@ import type { SiteConfig } from "@/types/site";
  */
 export const siteConfig: SiteConfig = {
   name: "Pankaj Sharma",
-  role: "AI Engineer",
+  role: "Senior AI Engineer",
   url: "https://pankajsharma.dev",
   description:
-    "Pankaj Sharma is an AI Engineer working on backend systems, LLM applications, RAG, agentic AI, and production AI infrastructure.",
+    "Pankaj Sharma is a Senior AI Engineer at Lyzr AI, building production document extraction, RAG, and agentic AI systems.",
   // TODO(pankaj): Replace with your own introduction.
   intro:
     "I build backend and AI systems — LLM applications, retrieval pipelines, and the infrastructure that keeps them reliable in production. This site is where I share my work, how I approach engineering problems, and what I'm learning along the way.",
@@ -22,6 +22,10 @@ export const siteConfig: SiteConfig = {
       label: "LinkedIn",
       // TODO(pankaj): Replace with your LinkedIn profile URL.
       href: "https://www.linkedin.com/",
+    },
+    x: {
+      label: "X",
+      href: "https://x.com/pankajsharma19_",
     },
   },
 };
