@@ -28,7 +28,7 @@ The site is meant to go beyond a resume and show how I think and work as an engi
 | Icons      | [Lucide React](https://lucide.dev)            |
 | 3D         | [three.js](https://threejs.org) (home page only, loaded on demand) |
 | Linting    | ESLint 9 with `eslint-config-next`            |
-| Fonts      | Geist, self-hosted at build time by `next/font` |
+| Fonts      | Geist, Geist Mono, and Goldman (display), self-hosted at build time by `next/font`; all SIL Open Font License |
 | Output     | Static HTML export (`out/`)                   |
 | Hosting    | Cloudflare (planned, see [Deployment](#deployment)) |
 

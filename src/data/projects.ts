@@ -46,11 +46,6 @@ export const projects: readonly Project[] = [
     technologies: ["Milvus", "RAG"],
   },
   {
-    name: "NIT Hamirpur placement portal",
-    category: "personal",
-    summary: "Automated the college's placement workflow.",
-  },
-  {
     name: "Federated learning BERT model",
     category: "personal",
     summary:

@@ -19,7 +19,7 @@ export function PageHeader({ title, description, eyebrow }: PageHeaderProps) {
       ) : null}
       <h1
         data-text={title}
-        className="glitch w-fit font-display text-2xl leading-tight uppercase sm:text-4xl"
+        className="glitch w-fit font-display font-bold text-2xl leading-tight uppercase sm:text-4xl"
       >
         {title}
       </h1>

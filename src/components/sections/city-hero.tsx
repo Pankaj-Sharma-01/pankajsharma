@@ -16,7 +16,7 @@ export function CityHero() {
         </p>
         <h1
           data-text={siteConfig.name}
-          className="glitch-idle text-sunrise w-fit pb-1 font-display text-3xl leading-tight uppercase sm:text-6xl"
+          className="glitch-idle text-sunrise w-fit pb-1 font-display font-bold text-3xl leading-tight uppercase sm:text-6xl"
         >
           {siteConfig.name}
         </h1>

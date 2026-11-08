@@ -163,6 +163,3 @@ next-env.d.ts
 # macOS / editor
 .DS_Store
 *.pem
-
-# Fonts licensed for local/desktop use only. Never commit or deploy these.
-public/fonts/local/

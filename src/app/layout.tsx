@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Goldman } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
-import { LocalFonts } from "@/components/layout/local-fonts";
 import { SiteHeader } from "@/components/layout/site-header";
 import { siteConfig } from "@/data/site";
 import { baseOpenGraph } from "@/lib/metadata";
@@ -18,6 +17,13 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+// Display face for names, titles, and gate labels (SIL Open Font License 1.1).
+const goldman = Goldman({
+  variable: "--font-goldman",
+  weight: "700",
   subsets: ["latin"],
 });
 
@@ -46,10 +52,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${goldman.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <LocalFonts />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:font-mono focus:text-sm focus:text-background"

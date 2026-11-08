@@ -57,7 +57,7 @@ export function CityCanvas({ gates, progressRef }: CityCanvasProps) {
         "monospace";
       const [{ createCityScene }] = await Promise.all([
         import("@/components/city/city-scene"),
-        document.fonts.load(`400 64px ${fontFamily}`).catch(() => undefined),
+        document.fonts.load(`700 64px ${fontFamily}`).catch(() => undefined),
       ]);
       if (cancelled) return;
       scene = createCityScene({

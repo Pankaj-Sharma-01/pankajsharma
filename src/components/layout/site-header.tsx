@@ -13,7 +13,7 @@ export function SiteHeader() {
       >
         <Link
           href="/"
-          className="w-fit shrink-0 rounded-sm font-display text-sm tracking-[0.12em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          className="w-fit shrink-0 rounded-sm font-display font-bold text-sm tracking-[0.12em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
         >
           <span aria-hidden="true" className="text-hot">
             &gt;{" "}

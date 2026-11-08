@@ -39,12 +39,8 @@
   --sun-soft: color-mix(in oklab, var(--sun) 20%, transparent);
   --sun-glow: color-mix(in oklab, var(--sun) 55%, transparent);
 
-  /*
-   * Display face for names, titles, and gate labels. "Ethnocentric" is only
-   * available on a local dev server (see src/components/layout/local-fonts.tsx);
-   * everywhere else this falls back to Geist Mono.
-   */
-  --font-display-stack: "Ethnocentric", var(--font-geist-mono), ui-monospace, monospace;
+  /* Display face for names, titles, and gate labels: Goldman (via next/font). */
+  --font-display-stack: var(--font-goldman), var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @theme inline {

@@ -30,7 +30,7 @@ export function DistrictPanel({ district }: DistrictPanelProps) {
       <h2
         id={headingId}
         data-text={district.label}
-        className="glitch w-fit font-display text-2xl uppercase sm:text-3xl"
+        className="glitch w-fit font-display font-bold text-2xl uppercase sm:text-3xl"
       >
         {district.label}
       </h2>
