@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Components use the Tailwind utilities generated from these
+ * (bg-background, text-muted, border-border, text-accent, …), so the palette
+ * changes in one place. All text pairs meet WCAG AA contrast.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --muted: #525252;
+  --border: #e5e5e5;
+  --accent: #0f766e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --muted: #a3a3a3;
+    --border: #262626;
+    --accent: #5eead4;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
