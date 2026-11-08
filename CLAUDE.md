@@ -12,7 +12,7 @@ Personal portfolio for https://pankajsharma.dev. Next.js 16 (App Router), React 
 
 - `npm run dev`: dev server at http://localhost:3000
 - `npm run check`: lint + typecheck + build. Run before committing.
-- `npm run lint`, `npm run typecheck` (`next typegen && tsc --noEmit`), `npm run build`
+- `npm run lint`, `npm run typecheck` (`next typegen && tsc --noEmit`), `npm run build` (runs `check:pictures` first)
 - `npm run preview`: serve the built `out/` directory. `next start` does not apply to static export.
 
 ## Next.js version
@@ -29,4 +29,5 @@ This is Next.js 16; APIs and conventions may differ from older versions. Before 
 - **Styling** uses the semantic tokens from `src/app/globals.css` (`text-muted`, `border-border`, `text-accent`, `bg-background`, `text-foreground`), not raw colours. Keep light/dark parity and WCAG AA contrast.
 - **Accessibility:** one `<h1>` per page (`PageHeader` or `Hero`), `<h2>` via `Section`, visible focus styles, external links via `ExternalLink`.
 - **Adding a page:** create `src/app/<route>/page.tsx`, add it to `src/data/navigation.ts` (which also feeds the sitemap), and use `PlaceholderNotice` for empty states.
+- **Pictures** live in `src/assets/pictures/` and are statically imported in `src/data/pictures.ts` (for dimensions and blur placeholders). `scripts/check-pictures.mjs` runs before every build and fails on GPS EXIF data or HEIC files. Never bypass it.
 - Keep dependencies minimal. Runtime deps are `next`, `react`, `react-dom`, `lucide-react`.

@@ -1,3 +1,5 @@
+import type { StaticImageData } from "next/image";
+
 /** "YYYY-MM", e.g. "2023-04". Month precision is enough for CV-style dates. */
 export type YearMonth = `${number}-${number}`;
 
@@ -66,4 +68,17 @@ export type PersonalRecord = {
   context?: string;
   /** Optional link to a result page or activity log. */
   url?: string;
+};
+
+/** "YYYY", "YYYY-MM" or "YYYY-MM-DD": as precise as you know it. */
+export type PictureDate = `${number}` | YearMonth | IsoDate;
+
+export type Picture = {
+  /** A static import from src/assets/pictures/ (gives size and blur preview). */
+  image: StaticImageData;
+  /** Describes the photo for screen readers. Required. */
+  alt: string;
+  date: PictureDate;
+  caption?: string;
+  location?: string;
 };

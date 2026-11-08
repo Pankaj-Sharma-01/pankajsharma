@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-pictures.mjs && next build",
     "preview": "npx --yes serve@14 out",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "check:pictures": "node scripts/check-pictures.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.70.0",

@@ -14,6 +14,7 @@ The site is meant to go beyond a resume and show how I think and work as an engi
 - **Projects**: case studies in backend engineering, LLM applications, RAG, agentic AI, OCR pipelines, and production AI systems.
 - **Books**: what I'm reading and what stayed with me.
 - **Thoughts**: short notes on system design, architecture, AI engineering, and technical leadership.
+- **Pictures**: life in photos over the years, shown as a collage per year.
 - **Health**: personal records and training.
 
 ## Tech stack
@@ -45,11 +46,12 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, and `lucide-react
 │   │   ├── layout.tsx       # Root layout: fonts, global metadata, header/footer, skip link
 │   │   ├── page.tsx         # Home
 │   │   ├── about/  experience/  education/  projects/
-│   │   ├── books/  thoughts/  health/
+│   │   ├── books/  thoughts/  pictures/  health/
 │   │   ├── not-found.tsx    # Exported as 404.html
 │   │   ├── sitemap.ts       # → sitemap.xml (generated at build time)
 │   │   ├── robots.ts        # → robots.txt  (generated at build time)
 │   │   └── globals.css      # Tailwind entry + design tokens (light/dark)
+│   ├── assets/pictures/     # Photos for the Pictures page (imported, not served from public/)
 │   ├── components/
 │   │   ├── layout/          # Site chrome: header, nav, footer, container
 │   │   ├── sections/        # Page-level sections (Hero, TimelineEntry)
@@ -57,6 +59,8 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, and `lucide-react
 │   ├── data/                # Site content and config: the only place to edit copy
 │   ├── lib/                 # Framework-agnostic helpers (metadata, dates, paths)
 │   └── types/               # Shared TypeScript types
+├── scripts/
+│   └── check-pictures.mjs   # Pre-build guard: blocks photos with GPS data
 ├── next.config.ts
 ├── eslint.config.mjs
 └── tsconfig.json
@@ -84,10 +88,33 @@ All content lives in typed files in `src/data/`. Each list starts empty, and its
 | Education       | `src/data/education.ts`   | Most recent first                                        |
 | Books           | `src/data/books.ts`       | `status`: `reading`, `read`, or `to-read`                |
 | Thoughts        | `src/data/thoughts.ts`    | Sorted newest first automatically; `slug` makes `#anchor` links |
+| Pictures        | `src/data/pictures.ts`    | See [Adding pictures](#adding-pictures)                  |
 | Health          | `src/data/health.ts`      | Personal records, shown in the order listed              |
 | Navigation      | `src/data/navigation.ts`  | Header links (the sitemap uses this list too)            |
 
 Dates are written as `"YYYY-MM"` (CV entries, books) or `"YYYY-MM-DD"` (thoughts, records), and are formatted in UTC so they never shift by a day.
+
+### Adding pictures
+
+The Pictures page groups photos by year (oldest first) and lays each year out as a collage. Each photo keeps its natural shape.
+
+1. **Export without location data.** Phone photos usually carry GPS coordinates in their metadata, and this site serves the original files. On a Mac, select the photos in **Photos → File → Export → Export N Photos**, choose **JPEG**, size **Large**, and leave **Include: Location Information** unchecked.
+2. **Save** them in `src/assets/pictures/` with a descriptive name, e.g. `2019-03-goa-beach.jpg`. JPEG, PNG, WebP and AVIF work; convert iPhone HEIC files to JPEG.
+3. **Register** each photo in `src/data/pictures.ts`:
+
+   ```ts
+   import goaBeach from "@/assets/pictures/2019-03-goa-beach.jpg";
+
+   export const pictures: readonly Picture[] = [
+     { image: goaBeach, alt: "Friends on the beach at sunset", date: "2019-03", caption: "Goa trip" },
+   ];
+   ```
+
+   `date` can be `"2019"`, `"2019-03"` or `"2019-03-14"`. `alt` describes the photo for screen-reader users and is required.
+
+**Why photos are imported instead of placed in `public/`:** an import gives Next.js each image's dimensions (so the collage doesn't jump while loading) and a tiny blurred preview, with nothing measured by hand.
+
+**Safety check:** `npm run build` first runs `scripts/check-pictures.mjs`. The build **fails** if a photo contains GPS data or is HEIC, and **warns** about files over 1.5 MB. Static export can't resize images on the fly, so each file is served as-is: keep them around 2000px on the long side. Run the check alone with `npm run check:pictures`.
 
 ## Local development
 
@@ -106,11 +133,12 @@ npm run dev        # http://localhost:3000
 | Script              | What it does                                                          |
 | ------------------- | --------------------------------------------------------------------- |
 | `npm run dev`       | Start the dev server with hot reload.                                 |
-| `npm run build`     | Production build; writes the static site to `out/`.                   |
+| `npm run build`     | Check pictures, then production build; writes the static site to `out/`. |
 | `npm run preview`   | Serve `out/` locally (via `serve`) to check the production build.     |
 | `npm run lint`      | Run ESLint.                                                           |
 | `npm run typecheck` | Generate Next.js route types, then run `tsc --noEmit`.                |
 | `npm run check`     | Lint, typecheck, and build. Run this before pushing.                  |
+| `npm run check:pictures` | Check `src/assets/pictures/` for GPS data, HEIC files, and oversized images. |
 
 `next start` is intentionally absent: it serves a Node.js server build, which a static export doesn't produce.
 
@@ -187,7 +215,8 @@ If the site needs server-side behaviour, such as a contact form handler, on-dema
 4. **Deployment**: Cloudflare setup as described above, custom domain, and analytics (Cloudflare Web Analytics needs no cookies or dependency).
 5. **SEO and sharing**: Open Graph images, structured data (`Person` JSON-LD), and an RSS feed for Thoughts.
 6. **Quality gates**: GitHub Actions running `npm run check` on PRs; a Lighthouse/axe accessibility check.
-7. **Design pass**: typography, a light/dark toggle, and project and thought card components once real content exists.
+7. **Pictures**: full-screen viewer with keyboard navigation, and responsive image sizes (generated at build time) if the gallery grows large.
+8. **Design pass**: typography, a light/dark toggle, and project and thought card components once real content exists.
 
 ## License
 
