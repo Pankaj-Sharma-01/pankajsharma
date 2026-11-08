@@ -27,12 +27,30 @@ export type WorkExperience = {
 
 export type Education = {
   institution: string;
+  /** Compact name for tight spaces (home page dashboard), e.g. "NIT Hamirpur". */
+  shortName?: string;
   qualification: string;
   field?: string;
   location?: string;
   start: YearMonth;
   end?: YearMonth;
   notes?: readonly string[];
+};
+
+export type ProjectCategory = "production" | "personal";
+
+export type Project = {
+  name: string;
+  category: ProjectCategory;
+  /** Company or client, for production work. */
+  organization?: string;
+  summary: string;
+  /** Headline result, e.g. { value: "88.6%", label: "extraction accuracy" }. */
+  metric?: { value: string; label: string };
+  details?: readonly string[];
+  technologies?: readonly string[];
+  /** Public link (repo, demo). Omit for private work. */
+  url?: string;
 };
 
 export type BookStatus = "reading" | "read" | "to-read";

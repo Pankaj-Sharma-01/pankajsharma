@@ -5,6 +5,7 @@ import { experience } from "@/data/experience";
 import { personalRecords } from "@/data/health";
 import { mainNav } from "@/data/navigation";
 import { pictures } from "@/data/pictures";
+import { projects } from "@/data/projects";
 import { siteConfig } from "@/data/site";
 import { thoughts } from "@/data/thoughts";
 import { byDateDesc, formatDate } from "@/lib/dates";
@@ -60,8 +61,21 @@ function statsFor(href: NavItem["href"]): DistrictStat[] {
         ...(current ? [{ label: "Now", value: current.company }] : []),
       ];
     }
-    case "/education":
-      return education.length > 0 ? [count(education.length, "Entry", "Entries")] : [];
+    case "/education": {
+      const latest = education[0];
+      if (!latest) return [];
+      return [
+        { label: "Degree", value: latest.qualification },
+        { label: "From", value: latest.shortName ?? latest.institution },
+      ];
+    }
+    case "/projects": {
+      if (projects.length === 0) return [];
+      return [
+        count(projects.length, "Project"),
+        { label: "In production", value: String(projects.filter((project) => project.category === "production").length) },
+      ];
+    }
     case "/books": {
       if (books.length === 0) return [];
       return [

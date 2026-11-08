@@ -38,6 +38,9 @@
   --hot-glow: color-mix(in oklab, var(--hot) 55%, transparent);
   --sun-soft: color-mix(in oklab, var(--sun) 20%, transparent);
   --sun-glow: color-mix(in oklab, var(--sun) 55%, transparent);
+
+  /* Display face for names, titles, and gate labels: Goldman (via next/font). */
+  --font-display-stack: var(--font-goldman), var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @theme inline {
@@ -52,6 +55,7 @@
   --color-surface: var(--surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display-stack);
 }
 
 html {

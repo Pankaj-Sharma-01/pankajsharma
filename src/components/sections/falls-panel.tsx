@@ -13,7 +13,7 @@ export function FallsPanel() {
       <h2
         id="district-falls-heading"
         data-text="The Falls"
-        className="glitch text-sunrise mx-auto w-fit font-mono text-3xl font-bold tracking-tight uppercase sm:text-4xl"
+        className="glitch text-sunrise mx-auto w-fit font-display font-bold text-2xl uppercase sm:text-3xl"
       >
         The Falls
       </h2>

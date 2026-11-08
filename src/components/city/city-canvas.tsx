@@ -53,7 +53,7 @@ export function CityCanvas({ gates, progressRef }: CityCanvasProps) {
 
     async function start(target: HTMLCanvasElement) {
       const fontFamily =
-        getComputedStyle(document.documentElement).getPropertyValue("--font-geist-mono").trim() ||
+        getComputedStyle(document.documentElement).getPropertyValue("--font-display-stack").trim() ||
         "monospace";
       const [{ createCityScene }] = await Promise.all([
         import("@/components/city/city-scene"),

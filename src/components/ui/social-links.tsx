@@ -6,7 +6,7 @@ type SocialLinksProps = {
 };
 
 export function SocialLinks({ className = "" }: SocialLinksProps) {
-  const links = [siteConfig.links.github, siteConfig.links.linkedin];
+  const links = [siteConfig.links.github, siteConfig.links.linkedin, siteConfig.links.x];
 
   return (
     <ul className={`flex flex-wrap gap-x-5 gap-y-2 ${className}`}>
