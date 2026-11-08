@@ -1,0 +1,330 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens: "sunrise in a cyber city". Night indigo fading into a
+ * hot-pink and amber dawn, lit by electric-cyan neon. Dark-only.
+ *
+ * Roles:
+ *   accent  electric cyan: links, interactive elements, primary neon
+ *   hot     hot pink: highlights, labels, glitch, hover glow
+ *   sun     sunrise amber: data values, the sun
+ *   ultra   ultraviolet: decorative only (grid, haze); too dark for text
+ *
+ * Components use the Tailwind utilities generated from these (text-accent,
+ * text-hot, text-sun, border-border…). The 3D city reads the same variables
+ * at runtime, so a change here recolours the scene too. Every text colour
+ * meets WCAG AA (4.5:1) on --background.
+ */
+:root {
+  --background: #0b0620;
+  --foreground: #f5f0ff;
+  --muted: #a99cc9;
+  --border: #2d2152;
+  --accent: #05d9e8;
+  --hot: #ff2a6d;
+  --sun: #ffb347;
+  --ultra: #7a3cff;
+  /* Sky, top to horizon (3D city). */
+  --sky-zenith: #0b0620;
+  --sky-dusk: #3a0f5c;
+  --sky-horizon: #ff4f7b;
+
+  /* Derived, never hand-picked. */
+  --surface: color-mix(in oklab, var(--background) 76%, transparent);
+  --accent-faint: color-mix(in oklab, var(--ultra) 12%, transparent);
+  --accent-soft: color-mix(in oklab, var(--accent) 18%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 50%, transparent);
+  --hot-soft: color-mix(in oklab, var(--hot) 22%, transparent);
+  --hot-glow: color-mix(in oklab, var(--hot) 55%, transparent);
+  --sun-soft: color-mix(in oklab, var(--sun) 20%, transparent);
+  --sun-glow: color-mix(in oklab, var(--sun) 55%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-hot: var(--hot);
+  --color-sun: var(--sun);
+  --color-ultra: var(--ultra);
+  --color-surface: var(--surface);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  /* Dawn rising from the bottom of the screen, under an ultraviolet grid. */
+  background-image:
+    radial-gradient(ellipse 70% 38% at 50% 100%, var(--sun-soft), transparent 70%),
+    radial-gradient(ellipse 110% 60% at 50% 100%, var(--hot-soft), transparent 75%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, color-mix(in oklab, var(--ultra) 16%, transparent), transparent 70%),
+    linear-gradient(var(--accent-faint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-faint) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    48px 48px,
+    48px 48px;
+  background-attachment: fixed;
+  color: var(--foreground);
+}
+
+/* CRT scanlines over everything. Purely decorative. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgb(0 0 0 / 0.16) 2px 3px
+  );
+}
+
+::selection {
+  background: var(--hot);
+  color: var(--background);
+}
+
+/* ---------------------------------------------------------------------------
+ * Utilities
+ * ------------------------------------------------------------------------- */
+
+/* Translucent panel with HUD corner brackets. */
+@utility hud-frame {
+  position: relative;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(var(--accent), var(--accent)) top left / 12px 1px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) top left / 1px 12px no-repeat,
+    linear-gradient(var(--hot), var(--hot)) top right / 12px 1px no-repeat,
+    linear-gradient(var(--hot), var(--hot)) top right / 1px 12px no-repeat,
+    linear-gradient(var(--hot), var(--hot)) bottom left / 12px 1px no-repeat,
+    linear-gradient(var(--hot), var(--hot)) bottom left / 1px 12px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom right / 12px 1px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) bottom right / 1px 12px no-repeat,
+    var(--surface);
+  backdrop-filter: blur(6px);
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
+}
+
+/* Brighter frame on hover/focus, for interactive panels. */
+@utility hud-frame-interactive {
+  &:hover,
+  &:focus-within {
+    border-color: var(--hot-glow);
+    box-shadow:
+      0 0 0 1px var(--hot-soft),
+      0 0 36px var(--hot-soft),
+      0 0 80px color-mix(in oklab, var(--ultra) 18%, transparent);
+  }
+}
+
+@utility text-glow {
+  text-shadow:
+    0 0 8px var(--accent-glow),
+    0 0 24px var(--accent-soft);
+}
+
+@utility text-glow-hot {
+  text-shadow:
+    0 0 8px var(--hot-glow),
+    0 0 24px var(--hot-soft);
+}
+
+@utility text-glow-sun {
+  text-shadow:
+    0 0 8px var(--sun-glow),
+    0 0 24px var(--sun-soft);
+}
+
+/* Sunrise gradient text: hot pink into amber. */
+@utility text-sunrise {
+  background: linear-gradient(100deg, var(--hot) 10%, var(--sun) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px var(--hot-soft));
+}
+
+/* Small monospace caption: "SECTOR 03 // EDUCATION". */
+@utility hud-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/*
+ * RGB-split glitch on hover/focus. The element needs data-text with the same
+ * text as its content; the copies are aria-hidden pseudo-elements.
+ */
+@utility glitch {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    opacity: 0.85;
+    color: var(--accent);
+    clip-path: inset(0 0 55% 0);
+    animation: glitch-shift 320ms steps(2) infinite;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 0.8;
+    color: var(--hot);
+    clip-path: inset(55% 0 0 0);
+    animation: glitch-shift 320ms steps(2) infinite reverse;
+  }
+}
+
+/* Same effect, running on its own every few seconds (hero name). */
+@utility glitch-idle {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  &::before {
+    color: var(--accent);
+    clip-path: inset(0 0 60% 0);
+    animation: glitch-burst 5s steps(1) infinite;
+  }
+
+  &::after {
+    color: var(--hot);
+    clip-path: inset(60% 0 0 0);
+    animation: glitch-burst 5s steps(1) 0.12s infinite reverse;
+  }
+}
+
+@keyframes glitch-shift {
+  0% {
+    transform: translate(-2px, 1px);
+  }
+  50% {
+    transform: translate(2px, -1px);
+  }
+  100% {
+    transform: translate(-1px, 0);
+  }
+}
+
+@keyframes glitch-burst {
+  0%,
+  88%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+  90% {
+    opacity: 0.8;
+    transform: translate(-4px, 1px);
+  }
+  92% {
+    opacity: 0.8;
+    transform: translate(3px, -1px);
+  }
+  94% {
+    opacity: 0.6;
+    transform: translate(-2px, 0);
+  }
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes cue-bob {
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@utility caret {
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+@utility cue-bob {
+  animation: cue-bob 1.6s ease-in-out infinite;
+}
+
+/*
+ * Home page districts: each panel materialises as its section scrolls into
+ * view and dissolves as it leaves. Uses scroll-driven animations where
+ * supported; elsewhere the panels are simply always visible.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .district-reveal {
+      animation: district-reveal linear both;
+      animation-timeline: view();
+    }
+  }
+}
+
+@keyframes district-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(80px) scale(0.96);
+    filter: blur(10px);
+  }
+  30%,
+  70% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.96);
+    filter: blur(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

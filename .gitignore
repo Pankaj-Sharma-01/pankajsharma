@@ -147,3 +147,19 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# --- Project additions -------------------------------------------------------
+
+# Next.js generated type references (recreated by `next dev` / `next build`)
+next-env.d.ts
+
+# Cloudflare Wrangler local state
+.wrangler/
+.dev.vars*
+
+# Vercel
+.vercel
+
+# macOS / editor
+.DS_Store
+*.pem
