@@ -191,20 +191,9 @@ Cloudflare recommends Workers (with static assets) for new projects; Pages also 
 | Output directory  | `out`           |
 | Node version      | from `.nvmrc`   |
 
-**Workers (Git-connected "Workers Builds")**: add a `wrangler.jsonc` at the repo root:
+**Workers (Git-connected "Workers Builds")**: the repo includes `wrangler.jsonc`, which serves `out/` as static assets (no Worker script), returns `404.html` for unknown paths, and matches the trailing-slash URLs. Check it locally without uploading anything: `npx wrangler deploy --dry-run` (after `npm run build`).
 
-```jsonc
-{
-  "name": "pankajsharma",
-  "compatibility_date": "<today's date, YYYY-MM-DD>",
-  "assets": {
-    "directory": "./out",
-    "not_found_handling": "404-page"
-  }
-}
-```
-
-Then, in the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository**, select this repo, set the build command to `npm run build` and the deploy command to `npx wrangler deploy`. Attach `pankajsharma.dev` under **Settings → Domains & Routes** (the domain's DNS must be on Cloudflare).
+Then, in the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository**, select this repo, set the build command to `npm run build`, keep the deploy command `npx wrangler deploy`, enable preview builds, and add the build variable `NODE_VERSION` = `22`. Production deploys from `main`. Attach `pankajsharma.dev` under **Settings → Domains & Routes** (the domain's DNS must be on Cloudflare).
 
 **Pages (alternative)**: go to **Workers & Pages → Create → Pages → Connect to Git**, choose the *None* framework preset, set the build command to `npm run build`, and set the output directory to `out`. Pages serves `404.html` automatically. Add the custom domain under **Custom domains**.
 

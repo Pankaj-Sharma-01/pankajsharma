@@ -1,0 +1,13 @@
+// Cloudflare Workers config. The site is a static export (`next build` →
+// out/), served as static assets. No Worker script runs.
+{
+  "name": "pankajsharma",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./out",
+    // Unknown URLs get out/404.html with a 404 status.
+    "not_found_handling": "404-page",
+    // Matches `trailingSlash: true` in next.config.ts: /about → /about/.
+    "html_handling": "auto-trailing-slash"
+  }
+}
