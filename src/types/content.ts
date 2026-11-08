@@ -58,13 +58,17 @@ export type Thought = {
   tags?: readonly string[];
 };
 
+export type PersonalRecordCategory = "running" | "strength";
+
 export type PersonalRecord = {
-  /** e.g. "5K", "Half marathon", "Deadlift". */
+  category: PersonalRecordCategory;
+  /** e.g. "5K", "Half marathon", "Pull-ups". */
   event: string;
-  /** Display value as you want it shown, e.g. "22:41" or "140 kg". */
+  /** Display value as you want it shown, e.g. "22:47" or "13 reps". */
   result: string;
-  date: IsoDate;
-  /** Race or place, e.g. "Mumbai Marathon". */
+  /** When it was set, if you want to show it. */
+  date?: IsoDate;
+  /** Race or place, e.g. "Tuffman Global 10K". */
   context?: string;
   /** Optional link to a result page or activity log. */
   url?: string;

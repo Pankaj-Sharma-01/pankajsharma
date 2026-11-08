@@ -6,6 +6,7 @@ import { Section } from "@/components/ui/section";
 import { books } from "@/data/books";
 import { formatYearMonth } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
+import { sectorLabel } from "@/lib/sectors";
 import type { Book, BookStatus } from "@/types/content";
 
 const title = "Books";
@@ -33,7 +34,7 @@ function BookItem({ book }: { book: Book }) {
         <span className="text-muted">by {book.author}</span>
       </p>
       {book.finished ? (
-        <p className="text-sm text-muted">Finished {formatYearMonth(book.finished)}</p>
+        <p className="hud-label">Finished {formatYearMonth(book.finished)}</p>
       ) : null}
       {book.note ? <p className="text-muted">{book.note}</p> : null}
     </li>
@@ -42,8 +43,8 @@ function BookItem({ book }: { book: Book }) {
 
 export default function BooksPage() {
   return (
-    <Container className="space-y-12">
-      <PageHeader title={title} description={description} />
+    <Container className="py-16 sm:py-24 space-y-12">
+      <PageHeader eyebrow={sectorLabel("/books")} title={title} description={description} />
 
       {books.length === 0 ? (
         <PlaceholderNotice>The reading list is coming soon.</PlaceholderNotice>

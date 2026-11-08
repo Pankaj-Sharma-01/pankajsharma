@@ -11,7 +11,7 @@ export function TagList({ items, label }: TagListProps) {
       {items.map((item) => (
         <li
           key={item}
-          className="rounded-full border border-border px-3 py-1 text-xs text-muted"
+          className="border border-border bg-surface px-3 py-1 font-mono text-xs tracking-wide text-muted transition-colors hover:border-hot/60 hover:text-hot"
         >
           {item}
         </li>

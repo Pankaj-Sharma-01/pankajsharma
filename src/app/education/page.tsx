@@ -6,6 +6,7 @@ import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
 import { education } from "@/data/education";
 import { formatPeriod } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
+import { sectorLabel } from "@/lib/sectors";
 
 const title = "Education";
 const description = "Formal education and qualifications.";
@@ -14,8 +15,8 @@ export const metadata = createPageMetadata({ title, description, path: "/educati
 
 export default function EducationPage() {
   return (
-    <Container className="space-y-12">
-      <PageHeader title={title} description={description} />
+    <Container className="py-16 sm:py-24 space-y-12">
+      <PageHeader eyebrow={sectorLabel("/education")} title={title} description={description} />
 
       {education.length === 0 ? (
         <PlaceholderNotice>Education details are coming soon.</PlaceholderNotice>

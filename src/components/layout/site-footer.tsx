@@ -7,10 +7,14 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-border">
-      <Container className="flex flex-col gap-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+    <footer className="relative z-10 mt-auto border-t border-border bg-background/80 backdrop-blur-md">
+      <Container
+        size="wide"
+        className="flex flex-col gap-4 py-8 font-mono text-xs tracking-wider text-muted uppercase sm:flex-row sm:items-center sm:justify-between"
+      >
         <p>
-          &copy; {year} {siteConfig.name}. All rights reserved.
+          &copy; {year} {siteConfig.name} <span aria-hidden="true">{"//"}</span> All rights
+          reserved
         </p>
         <SocialLinks />
       </Container>

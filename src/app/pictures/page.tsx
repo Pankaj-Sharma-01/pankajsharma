@@ -5,6 +5,7 @@ import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
 import { Section } from "@/components/ui/section";
 import { pictures } from "@/data/pictures";
 import { createPageMetadata } from "@/lib/metadata";
+import { sectorLabel } from "@/lib/sectors";
 import { groupPicturesByYear } from "@/lib/pictures";
 
 const title = "Pictures";
@@ -16,8 +17,8 @@ export default function PicturesPage() {
   const years = groupPicturesByYear(pictures);
 
   return (
-    <Container size="wide" className="space-y-14">
-      <PageHeader title={title} description={description} />
+    <Container size="wide" className="py-16 sm:py-24 space-y-14">
+      <PageHeader eyebrow={sectorLabel("/pictures")} title={title} description={description} />
 
       {years.length === 0 ? (
         <PlaceholderNotice>Pictures are coming soon.</PlaceholderNotice>

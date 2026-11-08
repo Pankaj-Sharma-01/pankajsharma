@@ -12,8 +12,15 @@ export function Section({ id, title, children }: SectionProps) {
   const headingId = `${id}-heading`;
   return (
     <section aria-labelledby={headingId} className="space-y-5">
-      <h2 id={headingId} className="text-xl font-semibold tracking-tight">
+      <h2
+        id={headingId}
+        className="flex items-center gap-3 font-mono text-sm font-semibold tracking-[0.2em] uppercase"
+      >
+        <span aria-hidden="true" className="text-hot">
+          {"//"}
+        </span>
         {title}
+        <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-hot/40 via-ultra/30 to-transparent" />
       </h2>
       {children}
     </section>

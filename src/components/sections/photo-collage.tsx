@@ -22,19 +22,19 @@ export function PhotoCollage({ pictures }: PhotoCollageProps) {
             <figure className="space-y-1.5">
               <a
                 href={picture.image.src}
-                className="block overflow-hidden rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="group block overflow-hidden border border-border transition-[border-color,box-shadow] duration-300 hover:border-hot/70 hover:shadow-[0_0_32px_var(--hot-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <Image
                   src={picture.image}
                   alt={picture.alt}
                   placeholder="blur"
                   sizes="(min-width: 640px) 33vw, 50vw"
-                  className="h-auto w-full transition-transform duration-300 hover:scale-[1.02]"
+                  className="h-auto w-full saturate-[0.85] transition-[transform,filter] duration-500 group-hover:scale-[1.03] group-hover:saturate-100"
                 />
                 <span className="sr-only">(view full size)</span>
               </a>
               {details.length > 0 ? (
-                <figcaption className="text-xs text-muted">{details.join(" · ")}</figcaption>
+                <figcaption className="font-mono text-[0.7rem] tracking-wider text-muted uppercase">{details.join(" · ")}</figcaption>
               ) : null}
             </figure>
           </li>

@@ -6,61 +6,75 @@ import { Section } from "@/components/ui/section";
 import { personalRecords } from "@/data/health";
 import { formatDate } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
+import { sectorLabel } from "@/lib/sectors";
+import type { PersonalRecord, PersonalRecordCategory } from "@/types/content";
 
 const title = "Health";
 const description = "Training, personal records, and staying active.";
 
 export const metadata = createPageMetadata({ title, description, path: "/health" });
 
-function PersonalRecordsTable() {
+const categories: readonly { id: PersonalRecordCategory; title: string }[] = [
+  { id: "running", title: "Running" },
+  { id: "strength", title: "Strength" },
+];
+
+function RecordTile({ record }: { record: PersonalRecord }) {
+  const details = [record.context, record.date ? formatDate(record.date) : undefined].filter(
+    (detail): detail is string => Boolean(detail),
+  );
+
+  return (
+    <div className="hud-frame hud-frame-interactive group flex flex-col gap-2 p-4">
+      <dt className="hud-label">{record.event}</dt>
+      <dd className="text-sunrise w-fit font-mono text-2xl font-bold tracking-tight tabular-nums transition-transform group-hover:translate-x-1 sm:text-3xl">
+        {record.result}
+      </dd>
+      {details.length > 0 ? (
+        <dd className="text-xs text-muted">
+          {record.url ? (
+            <ExternalLink href={record.url}>{details.join(" · ")}</ExternalLink>
+          ) : (
+            details.join(" · ")
+          )}
+        </dd>
+      ) : null}
+    </div>
+  );
+}
+
+function PersonalRecords() {
   if (personalRecords.length === 0) {
     return <PlaceholderNotice>Personal records are coming soon.</PlaceholderNotice>;
   }
 
   return (
-    // Horizontal scroll inside the wrapper keeps the page itself from
-    // overflowing on narrow screens.
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <caption className="sr-only">Personal records</caption>
-        <thead className="border-b border-border text-muted">
-          <tr>
-            <th scope="col" className="py-2 pr-4 font-medium">Event</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Result</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Date</th>
-            <th scope="col" className="py-2 font-medium">Where</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {personalRecords.map((record) => (
-            <tr key={`${record.event}-${record.date}`}>
-              <th scope="row" className="py-3 pr-4 font-medium">{record.event}</th>
-              <td className="py-3 pr-4 tabular-nums">{record.result}</td>
-              <td className="py-3 pr-4 whitespace-nowrap text-muted">
-                <time dateTime={record.date}>{formatDate(record.date)}</time>
-              </td>
-              <td className="py-3 text-muted">
-                {record.url ? (
-                  <ExternalLink href={record.url}>{record.context ?? "Details"}</ExternalLink>
-                ) : (
-                  (record.context ?? "—")
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-8">
+      {categories.map((category) => {
+        const records = personalRecords.filter((record) => record.category === category.id);
+        if (records.length === 0) return null;
+        return (
+          <div key={category.id} className="space-y-3">
+            <h3 className="hud-label">{category.title}</h3>
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {records.map((record) => (
+                <RecordTile key={record.event} record={record} />
+              ))}
+            </dl>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 export default function HealthPage() {
   return (
-    <Container className="space-y-14">
-      <PageHeader title={title} description={description} />
+    <Container className="py-16 sm:py-24 space-y-14">
+      <PageHeader eyebrow={sectorLabel("/health")} title={title} description={description} />
 
       <Section id="records" title="Personal records">
-        <PersonalRecordsTable />
+        <PersonalRecords />
       </Section>
 
       <Section id="activities" title="Recent activities">

@@ -5,6 +5,7 @@ import { TagList } from "@/components/ui/tag-list";
 import { thoughts } from "@/data/thoughts";
 import { byDateDesc, formatDate } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
+import { sectorLabel } from "@/lib/sectors";
 
 const title = "Thoughts";
 const description = "Short notes on system design, AI engineering, and technical leadership.";
@@ -15,8 +16,8 @@ export default function ThoughtsPage() {
   const sorted = [...thoughts].sort(byDateDesc);
 
   return (
-    <Container className="space-y-12">
-      <PageHeader title={title} description={description} />
+    <Container className="py-16 sm:py-24 space-y-12">
+      <PageHeader eyebrow={sectorLabel("/thoughts")} title={title} description={description} />
 
       {sorted.length === 0 ? (
         <PlaceholderNotice>The first notes are coming soon.</PlaceholderNotice>
@@ -37,7 +38,7 @@ export default function ThoughtsPage() {
                     {thought.title}
                   </a>
                 </h2>
-                <time dateTime={thought.date} className="block text-sm text-muted">
+                <time dateTime={thought.date} className="hud-label block">
                   {formatDate(thought.date)}
                 </time>
               </header>

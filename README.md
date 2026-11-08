@@ -26,12 +26,13 @@ The site is meant to go beyond a resume and show how I think and work as an engi
 | Language   | TypeScript (`strict: true`)                   |
 | Styling    | Tailwind CSS v4                               |
 | Icons      | [Lucide React](https://lucide.dev)            |
+| 3D         | [three.js](https://threejs.org) (home page only, loaded on demand) |
 | Linting    | ESLint 9 with `eslint-config-next`            |
 | Fonts      | Geist, self-hosted at build time by `next/font` |
 | Output     | Static HTML export (`out/`)                   |
 | Hosting    | Cloudflare (planned, see [Deployment](#deployment)) |
 
-Runtime dependencies are kept to `next`, `react`, `react-dom`, and `lucide-react`.
+Runtime dependencies are kept to `next`, `react`, `react-dom`, `lucide-react`, and `three`.
 
 ## Project structure
 
@@ -50,14 +51,15 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, and `lucide-react
 │   │   ├── not-found.tsx    # Exported as 404.html
 │   │   ├── sitemap.ts       # → sitemap.xml (generated at build time)
 │   │   ├── robots.ts        # → robots.txt  (generated at build time)
-│   │   └── globals.css      # Tailwind entry + design tokens (light/dark)
+│   │   └── globals.css      # Tailwind entry, palette tokens, HUD/glitch utilities
 │   ├── assets/pictures/     # Photos for the Pictures page (imported, not served from public/)
 │   ├── components/
 │   │   ├── layout/          # Site chrome: header, nav, footer, container
-│   │   ├── sections/        # Page-level sections (Hero, TimelineEntry)
+│   │   ├── city/            # Home page 3D city: scene (three.js), canvas, scroll/HUD shell
+│   │   ├── sections/        # Page-level sections (CityHero, DistrictPanel, FallsPanel, TimelineEntry, …)
 │   │   └── ui/              # Small reusable primitives (Section, TagList, links, …)
 │   ├── data/                # Site content and config: the only place to edit copy
-│   ├── lib/                 # Framework-agnostic helpers (metadata, dates, paths)
+│   ├── lib/                 # Helpers (metadata, dates, paths, sectors, district dashboard data)
 │   └── types/               # Shared TypeScript types
 ├── scripts/
 │   └── check-pictures.mjs   # Pre-build guard: blocks photos with GPS data
@@ -69,11 +71,16 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, and `lucide-react
 ### Architectural decisions
 
 - **Content is separate from presentation.** All copy (profile, experience, education, books, thoughts, records) lives in `src/data/`, typed by `src/types/`. Components only render that data, so content changes never touch component code. See [Editing content](#editing-content).
-- **Server Components by default.** The only client component is `MainNav`, which needs `usePathname()` to mark the active link. Everything else renders at build time and ships no component JavaScript.
+- **Server Components by default.** Client components are limited to `MainNav` (active link) and the home page city (`src/components/city/`). Everything else renders at build time and ships no component JavaScript.
+- **The home page is a drive through a city at sunrise.** Scrolling moves a camera down a neon avenue. Each site section is a gate on the road, and its panel (with live figures from `src/data/`) materialises as you reach it. The road ends at a cliff facing an endless waterfall, which is the final stop. All panel content is plain server-rendered HTML; the 3D scene is a progressive enhancement behind it:
+  - `three` is dynamically imported after hydration, so it never ships to other pages or blocks first paint.
+  - Visitors with `prefers-reduced-motion` get no 3D scene, and browsers without WebGL fall back silently; both still get every panel and link.
+  - The scene is procedural and seeded (no models or textures to download) and reads its colours from the CSS tokens at runtime.
+  - Small screens and low-core devices get fewer buildings and no bloom.
 - **Fully static output.** `next.config.ts` sets `output: "export"`. Every route is pre-rendered to HTML in `out/`, so the site needs no server runtime and can be hosted on any CDN. This was chosen deliberately; see [Deployment](#deployment) for what it rules out.
 - **Trailing-slash URLs.** `trailingSlash: true` emits `/about/index.html`, which gives clean URLs on any static host without rewrite rules. Canonical URLs and the sitemap use the same form.
 - **Centralised metadata.** The root layout sets `metadataBase` and a title template, and pages call `createPageMetadata()` from `src/lib/metadata.ts` for consistent titles, descriptions, canonical URLs, and Open Graph tags.
-- **Design tokens in CSS.** Colours are CSS variables in `globals.css` (with a dark-mode set), exposed to Tailwind via `@theme`, so components use semantic classes like `text-muted` and `border-border` rather than raw colours.
+- **Design tokens in CSS.** The cyberpunk "sunrise" palette (night indigo, electric cyan `accent`, hot pink `hot`, sunrise amber `sun`, ultraviolet `ultra`) lives as CSS variables in `globals.css`, exposed to Tailwind via `@theme`. Components use semantic classes (`text-accent`, `text-hot`, `text-sun`, `border-border`), never raw colours, and the 3D city reads the same variables, so one edit recolours everything. The site is dark-only by design.
 - **Accessibility baseline.** Semantic landmarks, one `<h1>` per page, a skip link, visible focus styles, `aria-current` on the active nav item, screen-reader text for links that open a new tab, AA colour contrast, and `prefers-reduced-motion` support.
 
 ## Editing content
@@ -216,7 +223,7 @@ If the site needs server-side behaviour, such as a contact form handler, on-dema
 5. **SEO and sharing**: Open Graph images, structured data (`Person` JSON-LD), and an RSS feed for Thoughts.
 6. **Quality gates**: GitHub Actions running `npm run check` on PRs; a Lighthouse/axe accessibility check.
 7. **Pictures**: full-screen viewer with keyboard navigation, and responsive image sizes (generated at build time) if the gallery grows large.
-8. **Design pass**: typography, a light/dark toggle, and project and thought card components once real content exists.
+8. **City polish**: a sound toggle, per-district landmarks in the 3D scene, and performance budgets measured on real mobile devices.
 
 ## License
 

@@ -6,13 +6,21 @@ import { siteConfig } from "@/data/site";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-border">
-      <Container className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/70 backdrop-blur-md">
+      <Container
+        size="wide"
+        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8"
+      >
         <Link
           href="/"
-          className="w-fit rounded-sm font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          className="w-fit shrink-0 rounded-sm font-mono text-sm font-semibold tracking-[0.2em] uppercase focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
         >
-          {siteConfig.name}
+          <span aria-hidden="true" className="text-hot">
+            &gt;{" "}
+          </span>
+          <span data-text={siteConfig.name} className="glitch">
+            {siteConfig.name}
+          </span>
         </Link>
         <MainNav />
       </Container>
