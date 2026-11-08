@@ -35,7 +35,7 @@ const taglines: Record<NavItem["href"], string> = {
   "/experience": "Roles, ownership, and the systems I've been responsible for.",
   "/education": "Where the foundations were laid.",
   "/projects": "Case studies in backend and production AI systems.",
-  "/books": "The reading list, with what stayed with me.",
+  "/books": "Book reviews, rated out of 10, with what stayed with me.",
   "/thoughts": "Short notes on system design, AI engineering, and leadership.",
   "/pictures": "Life in pictures, over the years.",
   "/health": "Personal records, training, and staying active.",
@@ -79,8 +79,8 @@ function statsFor(href: NavItem["href"]): DistrictStat[] {
     case "/books": {
       if (books.length === 0) return [];
       return [
-        count(books.filter((book) => book.status === "reading").length, "Reading", "Reading"),
-        count(books.filter((book) => book.status === "read").length, "Read", "Read"),
+        count(books.length, "Review"),
+        { label: "Top rated", value: [...books].sort((a, b) => b.rating - a.rating)[0].title },
       ];
     }
     case "/thoughts": {
