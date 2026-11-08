@@ -53,17 +53,16 @@ export type Project = {
   url?: string;
 };
 
-export type BookStatus = "reading" | "read" | "to-read";
+/** Whole-number rating out of 10. */
+export type BookRating = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
+/** A book review: name, author, rating out of 10, and your thoughts. */
 export type Book = {
   title: string;
   author: string;
-  status: BookStatus;
-  /** When you finished it (status "read"). */
-  finished?: YearMonth;
-  /** Your takeaway, in a sentence or two. */
-  note?: string;
-  url?: string;
+  rating: BookRating;
+  /** Your thoughts on the book. */
+  thoughts: string;
 };
 
 export type Thought = {
