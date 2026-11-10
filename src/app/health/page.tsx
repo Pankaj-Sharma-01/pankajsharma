@@ -6,7 +6,6 @@ import { Section } from "@/components/ui/section";
 import { personalRecords } from "@/data/health";
 import { formatDate } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
-import { sectorLabel } from "@/lib/sectors";
 import type { PersonalRecord, PersonalRecordCategory } from "@/types/content";
 
 const title = "Health";
@@ -25,7 +24,7 @@ function RecordTile({ record }: { record: PersonalRecord }) {
   );
 
   return (
-    <div className="hud-frame hud-frame-interactive group flex flex-col gap-2 p-4">
+    <div className="reveal hud-frame hud-frame-interactive group flex flex-col gap-2 p-4">
       <dt className="hud-label">{record.event}</dt>
       <dd className="text-sunrise w-fit font-mono text-2xl font-bold tracking-tight tabular-nums transition-transform group-hover:translate-x-1 sm:text-3xl">
         {record.result}
@@ -71,7 +70,7 @@ function PersonalRecords() {
 export default function HealthPage() {
   return (
     <Container className="py-16 sm:py-24 space-y-14">
-      <PageHeader eyebrow={sectorLabel("/health")} title={title} description={description} />
+      <PageHeader sector="/health" title={title} description={description} />
 
       <Section id="records" title="Personal records">
         <PersonalRecords />

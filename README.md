@@ -55,7 +55,8 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, `lucide-react`, a
 │   ├── assets/pictures/     # Photos for the Pictures page (imported, not served from public/)
 │   ├── components/
 │   │   ├── layout/          # Site chrome: header, nav, footer, container
-│   │   ├── city/            # Home page 3D city: scene (three.js), canvas, scroll/HUD shell
+│   │   ├── city/            # Home page 3D city: canvas, scroll/HUD shell, and scene/ (three.js
+│   │   │                    #   modules: buildings, signs, road, falls, sky)
 │   │   ├── sections/        # Page-level sections (CityHero, DistrictPanel, FallsPanel, TimelineEntry, …)
 │   │   └── ui/              # Small reusable primitives (Section, TagList, links, …)
 │   ├── data/                # Site content and config: the only place to edit copy
@@ -75,7 +76,8 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, `lucide-react`, a
 - **The home page is a drive through a city at sunrise.** Scrolling moves a camera down a neon avenue. Each site section is a gate on the road, and its panel (with live figures from `src/data/`) materialises as you reach it. The road ends at a cliff facing an endless waterfall, which is the final stop. All panel content is plain server-rendered HTML; the 3D scene is a progressive enhancement behind it:
   - `three` is dynamically imported after hydration, so it never ships to other pages or blocks first paint.
   - Visitors with `prefers-reduced-motion` get no 3D scene, and browsers without WebGL fall back silently; both still get every panel and link.
-  - The scene is procedural and seeded (no models or textures to download) and reads its colours from the CSS tokens at runtime.
+  - The scene is procedural and seeded (no models or textures to download) and reads its colours from the CSS tokens at runtime. Buildings are composed from instanced boxes with shader-drawn facades; ad screens and neon signs are drawn onto canvas atlases at runtime.
+- **Getting around.** A **Map** button in the header (or the `M` key) opens the city map on every page: all sections, with `0`–`8` to jump. On the home page, the bottom bar has previous/next stop buttons (also `←` / `→`). Every section page ends with previous/next section links.
   - Small screens and low-core devices get fewer buildings and no bloom.
 - **Fully static output.** `next.config.ts` sets `output: "export"`. Every route is pre-rendered to HTML in `out/`, so the site needs no server runtime and can be hosted on any CDN. This was chosen deliberately; see [Deployment](#deployment) for what it rules out.
 - **Trailing-slash URLs.** `trailingSlash: true` emits `/about/index.html`, which gives clean URLs on any static host without rewrite rules. Canonical URLs and the sitemap use the same form.

@@ -5,7 +5,6 @@ import { Section } from "@/components/ui/section";
 import { TagList } from "@/components/ui/tag-list";
 import { about } from "@/data/about";
 import { createPageMetadata } from "@/lib/metadata";
-import { sectorLabel } from "@/lib/sectors";
 
 const title = "About";
 const description = "Background, engineering interests, and how I approach building systems.";
@@ -15,7 +14,7 @@ export const metadata = createPageMetadata({ title, description, path: "/about" 
 export default function AboutPage() {
   return (
     <Container className="py-16 sm:py-24 space-y-14">
-      <PageHeader eyebrow={sectorLabel("/about")} title={title} description={description} />
+      <PageHeader sector="/about" title={title} description={description} />
 
       {about.bio.length > 0 ? (
         <div className="space-y-4 text-lg leading-relaxed">

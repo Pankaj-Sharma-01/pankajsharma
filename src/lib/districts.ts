@@ -30,17 +30,6 @@ export type District = {
   stats: DistrictStat[];
 };
 
-const taglines: Record<NavItem["href"], string> = {
-  "/about": "Who I am, what I build, and what I care about as an engineer.",
-  "/experience": "Roles, ownership, and the systems I've been responsible for.",
-  "/education": "Where the foundations were laid.",
-  "/projects": "Case studies in backend and production AI systems.",
-  "/books": "Book reviews, rated out of 10, with what stayed with me.",
-  "/thoughts": "Short notes on system design, AI engineering, and leadership.",
-  "/pictures": "Life in pictures, over the years.",
-  "/health": "Personal records, training, and staying active.",
-};
-
 function count(value: number, singular: string, plural = `${singular}s`): DistrictStat {
   return { label: value === 1 ? singular : plural, value: String(value) };
 }
@@ -110,7 +99,7 @@ export function getDistricts(): District[] {
     number: sectorNumber(item.href),
     label: item.label,
     href: item.href,
-    tagline: taglines[item.href] ?? "",
+    tagline: item.description,
     stats: statsFor(item.href),
   }));
 }

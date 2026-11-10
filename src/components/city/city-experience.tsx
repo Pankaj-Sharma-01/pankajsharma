@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { CityCanvas } from "@/components/city/city-canvas";
 import type { CityGate } from "@/components/city/city-scene";
+import { isTypingTarget } from "@/lib/keyboard";
 
 export type CityDistrictLink = CityGate & {
   /** Matches the section's `id="district-<id>"`. */
@@ -38,8 +40,9 @@ function usePrefersReducedMotion() {
 
 /**
  * Home page shell: tracks how far the visitor has scrolled through the
- * district sections, drives the 3D city from that, and renders the HUD
- * (city map + progress readout).
+ * district sections, drives the 3D city from that, and renders the HUD:
+ * a rail of stops, previous/next travel buttons (also ← and → keys), and a
+ * progress readout.
  */
 export function CityExperience({ districts, children }: CityExperienceProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,12 +97,38 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
     };
   }, []);
 
-  const stops = [
-    { id: "entry", number: "00", label: "Entry" },
-    ...districts,
-    { id: "falls", number: "∞", label: "The Falls" },
-  ];
+  const stops = useMemo(
+    () => [
+      { id: "entry", number: "00", label: "Entry" },
+      ...districts,
+      { id: "falls", number: "∞", label: "The Falls" },
+    ],
+    [districts],
+  );
   const active = activeIndex > 0 ? stops[activeIndex] : undefined;
+  const previous = stops[activeIndex - 1];
+  const next = stops[activeIndex + 1];
+
+  // Smooth scrolling comes from CSS, which also turns it off for reduced motion.
+  const travelTo = useCallback(
+    (index: number) => {
+      const stop = stops[index];
+      if (stop) document.getElementById(`district-${stop.id}`)?.scrollIntoView();
+    },
+    [stops],
+  );
+
+  // ← and → travel between stops (↑ ↓ and scrolling work as usual).
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (event.key === "ArrowRight") travelTo(activeIndex + 1);
+      else if (event.key === "ArrowLeft") travelTo(activeIndex - 1);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex, travelTo]);
 
   return (
     <div ref={containerRef} className="relative isolate">
@@ -109,9 +138,9 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
           except on their panels. */}
       <div className="relative z-10">{children}</div>
 
-      {/* City map: jump to any district. */}
+      {/* Rail of stops: jump to any district. */}
       <nav
-        aria-label="City map"
+        aria-label="Stops on this page"
         className="fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 xl:block"
       >
         <ol className="space-y-1 font-mono text-[0.68rem] tracking-[0.2em] uppercase">
@@ -147,10 +176,10 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
         </ol>
       </nav>
 
-      {/* Status bar: decorative readout of where you are in the city. */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
-        <div className="flex items-center justify-between gap-4 px-4 pb-2 font-mono text-[0.65rem] tracking-[0.2em] text-muted uppercase sm:px-8">
-          <span>
+      {/* Bottom HUD: where you are, travel controls, and progress. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 px-4 pb-2 font-mono text-[0.65rem] tracking-[0.2em] text-muted uppercase sm:px-8">
+          <p aria-hidden="true" className="hidden truncate pb-1 sm:block">
             {active?.id === "falls" ? (
               <>
                 Terminus {"//"} <span className="text-hot">{active.label}</span>
@@ -161,14 +190,42 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
                 {"//"} {active.label}
               </>
             ) : (
-              <>Scroll to enter the city</>
+              <>Use ← → or scroll to travel</>
             )}
-          </span>
-          <span>
+          </p>
+
+          <div role="group" aria-label="Travel between stops" className="pointer-events-auto col-start-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => travelTo(activeIndex - 1)}
+              disabled={!previous}
+              className="grid size-10 place-items-center border border-accent/50 bg-background/80 text-accent backdrop-blur-sm transition-[background-color,box-shadow,opacity] hover:bg-accent/20 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-30"
+            >
+              <ChevronUp aria-hidden="true" className="size-4" />
+              <span className="sr-only">Previous stop{previous ? `: ${previous.label}` : ""}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => travelTo(activeIndex + 1)}
+              disabled={!next}
+              className="flex h-10 items-center gap-2 border border-accent/50 bg-background/80 px-4 text-xs tracking-[0.2em] text-accent uppercase backdrop-blur-sm transition-[background-color,box-shadow,opacity] hover:bg-accent/20 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-40"
+            >
+              {next ? (
+                <>
+                  <span className="text-muted">Next</span> {next.label}
+                </>
+              ) : (
+                "End of the line"
+              )}
+              <ChevronDown aria-hidden="true" className="cue-bob size-4" />
+            </button>
+          </div>
+
+          <p aria-hidden="true" className="col-start-3 hidden pb-1 text-right sm:block">
             Sync <span ref={syncRef} className="text-sun">00%</span>
-          </span>
+          </p>
         </div>
-        <div className="h-0.5 bg-border/60">
+        <div aria-hidden="true" className="h-0.5 bg-border/60">
           <div
             ref={barRef}
             className="h-full origin-left scale-x-0 bg-gradient-to-r from-ultra via-hot to-sun shadow-[0_0_12px_var(--hot-glow)]"

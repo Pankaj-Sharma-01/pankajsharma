@@ -7,7 +7,6 @@ import { Section } from "@/components/ui/section";
 import { TagList } from "@/components/ui/tag-list";
 import { projects } from "@/data/projects";
 import { createPageMetadata } from "@/lib/metadata";
-import { sectorLabel } from "@/lib/sectors";
 import type { Project, ProjectCategory } from "@/types/content";
 
 const title = "Projects";
@@ -22,7 +21,7 @@ const categories: readonly { id: ProjectCategory; title: string }[] = [
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <article className="hud-frame hud-frame-interactive flex flex-col gap-4 p-5">
+    <article className="reveal hud-frame hud-frame-interactive flex flex-col gap-4 p-5">
       <header className="space-y-1">
         {project.organization ? <p className="hud-label">{project.organization}</p> : null}
         <h3 className="text-lg font-semibold tracking-tight">
@@ -47,7 +46,7 @@ function ProjectCard({ project }: { project: Project }) {
 export default function ProjectsPage() {
   return (
     <Container className="py-16 sm:py-24 space-y-14">
-      <PageHeader eyebrow={sectorLabel("/projects")} title={title} description={description} />
+      <PageHeader sector="/projects" title={title} description={description} />
 
       {projects.length === 0 ? (
         <PlaceholderNotice>Project case studies will be added here.</PlaceholderNotice>

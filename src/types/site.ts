@@ -1,6 +1,8 @@
 export type NavItem = {
   label: string;
   href: `/${string}`;
+  /** One line on what the section holds (city map, home page panels). */
+  description: string;
 };
 
 export type ExternalLink = {

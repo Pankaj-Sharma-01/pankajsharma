@@ -3,7 +3,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
 import { books } from "@/data/books";
 import { createPageMetadata } from "@/lib/metadata";
-import { sectorLabel } from "@/lib/sectors";
 import type { Book } from "@/types/content";
 
 const title = "Books";
@@ -36,7 +35,7 @@ function RatingMeter({ rating }: { rating: Book["rating"] }) {
 
 function BookReview({ book }: { book: Book }) {
   return (
-    <article className="hud-frame hud-frame-interactive space-y-4 p-5 sm:p-6">
+    <article className="reveal hud-frame hud-frame-interactive space-y-4 p-5 sm:p-6">
       <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="space-y-1">
           <h2 className="font-display text-xl font-bold tracking-wide uppercase">{book.title}</h2>
@@ -54,7 +53,7 @@ function BookReview({ book }: { book: Book }) {
 export default function BooksPage() {
   return (
     <Container className="py-16 sm:py-24 space-y-12">
-      <PageHeader eyebrow={sectorLabel("/books")} title={title} description={description} />
+      <PageHeader sector="/books" title={title} description={description} />
 
       {books.length === 0 ? (
         <PlaceholderNotice>Book reviews are coming soon.</PlaceholderNotice>
