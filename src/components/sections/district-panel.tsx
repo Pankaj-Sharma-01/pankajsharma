@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+import { SectorIcon } from "@/components/ui/sector-icon";
 import type { District } from "@/lib/districts";
 
 type DistrictPanelProps = {
@@ -26,6 +27,10 @@ export function DistrictPanel({ district }: DistrictPanelProps) {
         />
         Sector {district.number} {"//"} {online ? "Online" : "Pending"}
       </p>
+
+      <span className="grid size-11 place-items-center border border-border text-accent">
+        <SectorIcon href={district.href} className="size-5" />
+      </span>
 
       <h2
         id={headingId}

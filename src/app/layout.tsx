@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Goldman } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SectorPager } from "@/components/layout/sector-pager";
 import { SiteHeader } from "@/components/layout/site-header";
+import { Skyline } from "@/components/layout/skyline";
 import { siteConfig } from "@/data/site";
 import { baseOpenGraph } from "@/lib/metadata";
 
@@ -61,10 +63,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
+        <Skyline />
         <SiteHeader />
         {/* Pages own their vertical padding: the home page is full-bleed. */}
         <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
           {children}
+          <SectorPager />
         </main>
         <SiteFooter />
       </body>

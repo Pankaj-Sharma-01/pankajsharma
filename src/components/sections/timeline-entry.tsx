@@ -11,7 +11,7 @@ type TimelineEntryProps = {
 /** One dated entry on a CV-style page (a role, a degree). */
 export function TimelineEntry({ title, subtitle, period, location, children }: TimelineEntryProps) {
   return (
-    <article className="relative border-l border-ultra/50 pl-6">
+    <article className="reveal relative border-l border-ultra/50 pl-6">
       <span
         aria-hidden="true"
         className="absolute top-1.5 -left-[5px] size-[9px] rotate-45 border border-hot bg-background shadow-[0_0_12px_var(--hot-glow)]"

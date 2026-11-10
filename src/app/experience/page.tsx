@@ -7,7 +7,6 @@ import { TagList } from "@/components/ui/tag-list";
 import { experience } from "@/data/experience";
 import { formatPeriod } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
-import { sectorLabel } from "@/lib/sectors";
 
 const title = "Work Experience";
 const description = "Roles, responsibilities, and the systems I've owned.";
@@ -17,7 +16,7 @@ export const metadata = createPageMetadata({ title, description, path: "/experie
 export default function ExperiencePage() {
   return (
     <Container className="py-16 sm:py-24 space-y-12">
-      <PageHeader eyebrow={sectorLabel("/experience")} title={title} description={description} />
+      <PageHeader sector="/experience" title={title} description={description} />
 
       {experience.length === 0 ? (
         <PlaceholderNotice>Work experience is coming soon.</PlaceholderNotice>
