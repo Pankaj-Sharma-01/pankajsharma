@@ -2,14 +2,15 @@ import * as THREE from "three";
 
 import type { Random } from "@/lib/random";
 
+import type { CityDensity } from "../city-config";
 import type { Lot } from "./buildings";
 import {
   ROAD_HALF_WIDTH,
   boxMatrix,
   instanced,
   noiseChunk,
+  surfaceVertexShader,
   uvVertexShader,
-  worldVertexShader,
   type CityPalette,
 } from "./shared";
 
@@ -17,6 +18,10 @@ import {
  * The falls: past the cliff, the land is a lake whose water pours over the
  * rim of a vast circular chasm and falls away forever. Everything is at or
  * below ground level, so it stays hidden until the road ends.
+ *
+ * Built in the last street's local coordinates (x across, cliff at
+ * `cliffZ`, sun down -z). That street always runs toward -z, so local and
+ * world axes differ only by the street's origin.
  */
 
 const CHASM_RADIUS = 200;
@@ -36,12 +41,11 @@ export function chasmFor(cliffZ: number): Chasm {
  * few slender spires rising out of the depths. Kept off the road's side and
  * out of the line of sight to the sunrise.
  */
-export function abyssLots(random: Random, cliffZ: number, lowPower: boolean): Lot[] {
+export function abyssLots(random: Random, cliffZ: number, count: number): Lot[] {
   const { centerZ, radius } = chasmFor(cliffZ);
   const lots: Lot[] = [];
 
-  const ring = lowPower ? 22 : 46;
-  for (let index = 0; index < ring; index++) {
+  for (let index = 0; index < count; index++) {
     const angle = random() * Math.PI * 2;
     const distance = radius + 130 + random() * 420;
     const x = Math.sin(angle) * distance;
@@ -59,7 +63,7 @@ export function abyssLots(random: Random, cliffZ: number, lowPower: boolean): Lo
     });
   }
 
-  const inside = lowPower ? 3 : 6;
+  const inside = count > 30 ? 6 : 3;
   for (let index = 0; index < inside; index++) {
     const side = index % 2 === 0 ? -1 : 1;
     const angle = Math.PI + side * (0.7 + random() * 0.9);
@@ -87,24 +91,27 @@ const lakeFragmentShader = /* glsl */ `
   uniform vec3 uFoam;
   uniform vec2 uCenter;
   uniform float uRadius;
+  uniform vec3 uOrigin;
   varying vec3 vWorld;
   #include <fog_pars_fragment>
   ${noiseChunk}
 
   void main() {
-    vec2 relative = vWorld.xz - uCenter;
+    // Position in the street's own frame.
+    vec3 p = vWorld - uOrigin;
+    vec2 relative = p.xz - uCenter;
     float distanceToCenter = length(relative);
     float angle = atan(relative.y, relative.x);
 
     // Ripples, and currents drawn toward the rim.
-    float ripple = noise(vWorld.xz * 0.3 + vec2(0.0, uTime * 0.5));
+    float ripple = noise(p.xz * 0.3 + vec2(0.0, uTime * 0.5));
     float current = noise(vec2(angle * 80.0, distanceToCenter * 0.12 + uTime * 1.2));
     vec3 color = mix(uDeep, uSky, 0.2 + 0.4 * ripple);
 
     // Sunrise reflected as a glittering path toward the sun (down -z).
     float width = 4.0 + 0.09 * distance(vWorld, cameraPosition);
-    float path = exp(-abs(vWorld.x) / width);
-    float glitter = step(0.8, noise(vWorld.xz * vec2(0.7, 0.22) + vec2(0.0, uTime * 1.4)));
+    float path = exp(-abs(p.x) / width);
+    float glitter = step(0.8, noise(p.xz * vec2(0.7, 0.22) + vec2(0.0, uTime * 1.4)));
     color += uSun * glitter * path * 1.3 + uHot * path * 0.18;
 
     // White water at the lip.
@@ -185,7 +192,14 @@ function lakeShape(cliffZ: number, chasm: Chasm) {
   return shape;
 }
 
-export function createFalls(palette: CityPalette, random: Random, cliffZ: number, lowPower: boolean) {
+export function createFalls(
+  palette: CityPalette,
+  random: Random,
+  cliffZ: number,
+  density: CityDensity,
+  /** World position of the street's origin. */
+  origin: { x: number; z: number },
+) {
   const group = new THREE.Group();
   const time = { value: 0 };
   // 0 until the final stretch of the road: the falls are a surprise at the end.
@@ -196,7 +210,7 @@ export function createFalls(palette: CityPalette, random: Random, cliffZ: number
 
   // --- Lake, flowing to the rim ----------------------------------------
   const lakeMaterial = new THREE.ShaderMaterial({
-    vertexShader: worldVertexShader,
+    vertexShader: surfaceVertexShader,
     fragmentShader: lakeFragmentShader,
     fog: true,
     uniforms: THREE.UniformsUtils.merge([
@@ -210,6 +224,7 @@ export function createFalls(palette: CityPalette, random: Random, cliffZ: number
         uFoam: { value: foam },
         uCenter: { value: new THREE.Vector2(0, chasm.centerZ) },
         uRadius: { value: chasm.radius },
+        uOrigin: { value: new THREE.Vector3(origin.x, 0, origin.z) },
       },
     ]),
   });
@@ -225,7 +240,7 @@ export function createFalls(palette: CityPalette, random: Random, cliffZ: number
       chasm.radius,
       chasm.radius,
       FALL_DEPTH,
-      lowPower ? 96 : 192,
+      density.columns > 4 ? 192 : 96,
       1,
       true,
       nearArc,
@@ -280,7 +295,7 @@ export function createFalls(palette: CityPalette, random: Random, cliffZ: number
 
   // --- Depth rings: neon hoops sinking out of sight, to show the drop ---
   const ringMaterials: { material: THREE.MeshBasicMaterial; strength: number }[] = [];
-  const ringCount = lowPower ? 5 : 9;
+  const ringCount = density.depthRings;
   for (let index = 0; index < ringCount; index++) {
     const t = index / (ringCount - 1);
     const material = new THREE.MeshBasicMaterial({
@@ -297,7 +312,7 @@ export function createFalls(palette: CityPalette, random: Random, cliffZ: number
   }
 
   // --- Spray rising off the falling water ------------------------------
-  const sprayCount = lowPower ? 500 : 1600;
+  const sprayCount = density.spray;
   const sprayPositions = new Float32Array(sprayCount * 3);
   const spraySpeeds = new Float32Array(sprayCount);
   for (let index = 0; index < sprayCount; index++) {

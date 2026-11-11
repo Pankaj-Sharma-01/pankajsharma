@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+import { CITY_CONFIG } from "../city-config";
 import { noiseChunk, type CityPalette } from "./shared";
 
 /** Direction of the rising sun: straight down the avenue, just above the horizon. */
@@ -22,6 +23,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3 uStar;
   uniform vec3 uSunDirection;
   uniform float uTime;
+  uniform float uGodRays;
   varying vec3 vDirection;
   ${noiseChunk}
 
@@ -48,6 +50,11 @@ const fragmentShader = /* glsl */ `
     float towardSun = max(dot(direction, uSunDirection), 0.0);
     color += uHot * pow(towardSun, 4.0) * 0.35;
     color += uSun * pow(towardSun, 40.0) * 0.3;
+
+    // Shafts of light fanning out through the haze around the sun.
+    vec2 fromSun = vec2(direction.x, direction.y - uSunDirection.y);
+    float shafts = fbm(vec2(atan(fromSun.y, fromSun.x) * 7.0, uTime * 0.03));
+    color += uSun * smoothstep(0.42, 0.8, shafts) * exp(-length(fromSun) * 3.2) * step(direction.z, 0.0) * uGodRays;
 
     // Sun disc, lit from amber (top) to hot pink (bottom), with retro
     // horizontal bands cut into its lower half that drift slowly upward.
@@ -81,6 +88,7 @@ export function createSky(palette: CityPalette) {
       uSun: { value: new THREE.Color(palette.sun) },
       uStar: { value: new THREE.Color(palette.foreground) },
       uSunDirection: { value: SUN_DIRECTION },
+      uGodRays: { value: CITY_CONFIG.effects.godRays },
       uTime: { value: 0 },
     },
   });

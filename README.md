@@ -55,8 +55,8 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, `lucide-react`, a
 │   ├── assets/pictures/     # Photos for the Pictures page (imported, not served from public/)
 │   ├── components/
 │   │   ├── layout/          # Site chrome: header, nav, footer, container
-│   │   ├── city/            # Home page 3D city: canvas, scroll/HUD shell, and scene/ (three.js
-│   │   │                    #   modules: buildings, signs, road, falls, sky)
+│   │   ├── city/            # Home page 3D city: canvas, scroll/HUD shell, minimap, route.ts,
+│   │   │                    #   city-config.ts (all tunables), and scene/ (three.js modules)
 │   │   ├── sections/        # Page-level sections (CityHero, DistrictPanel, FallsPanel, TimelineEntry, …)
 │   │   └── ui/              # Small reusable primitives (Section, TagList, links, …)
 │   ├── data/                # Site content and config: the only place to edit copy
@@ -73,12 +73,15 @@ Runtime dependencies are kept to `next`, `react`, `react-dom`, `lucide-react`, a
 
 - **Content is separate from presentation.** All copy (profile, experience, education, books, thoughts, records) lives in `src/data/`, typed by `src/types/`. Components only render that data, so content changes never touch component code. See [Editing content](#editing-content).
 - **Server Components by default.** Client components are limited to `MainNav` (active link) and the home page city (`src/components/city/`). Everything else renders at build time and ships no component JavaScript.
-- **The home page is a drive through a city at sunrise.** Scrolling moves a camera down a neon avenue. Each site section is a gate on the road, and its panel (with live figures from `src/data/`) materialises as you reach it. The road ends at a cliff facing an endless waterfall, which is the final stop. All panel content is plain server-rendered HTML; the 3D scene is a progressive enhancement behind it:
+- **The home page is a drive through a city at sunrise.** Scrolling moves a camera along a winding route. Each site section is a landmark building: you pull up to its glowing entrance (its panel, with live figures from `src/data/`, appears), drive in, turn inside the lobby, and come out onto the next street. The last street ends at a cliff facing an endless waterfall. All panel content is plain server-rendered HTML; the 3D scene is a progressive enhancement behind it:
   - `three` is dynamically imported after hydration, so it never ships to other pages or blocks first paint.
   - Visitors with `prefers-reduced-motion` get no 3D scene, and browsers without WebGL fall back silently; both still get every panel and link.
-  - The scene is procedural and seeded (no models or textures to download) and reads its colours from the CSS tokens at runtime. Buildings are composed from instanced boxes with shader-drawn facades; ad screens and neon signs are drawn onto canvas atlases at runtime.
-- **Getting around.** A **Map** button in the header (or the `M` key) opens the city map on every page: all sections, with `0`–`8` to jump. On the home page, the bottom bar has previous/next stop buttons (also `←` / `→`). Every section page ends with previous/next section links.
-  - Small screens and low-core devices get fewer buildings and no bloom.
+  - The scene is procedural and seeded (no models or image files to download) and reads its colours from the CSS tokens at runtime. Buildings and street furniture are instanced boxes with shader-drawn facades; signs are drawn onto canvas atlases at runtime, with original artwork and invented names.
+  - Each street and landmark is its own group, and only those around the camera are drawn.
+  - **One config file**, `src/components/city/city-config.ts`, holds every tunable: glow, fog, effect strengths (set one to 0 to switch it off), density, and the quality ladder. The route's shape is in `route.ts`, shared with the HUD minimap.
+  - **Adaptive quality:** the scene steps down a tier (resolution, then bloom, then lens effects) whenever the frame rate stays under the floor. Small screens and low-core devices start on a reduced density.
+  - **Debugging:** add `?fps` to the home page URL for a frame-rate readout, and `?quality=0`…`3` to hold a quality tier.
+- **Getting around.** A **Map** button in the header (or the `M` key) opens the city map on every page: all sections, with `0`–`8` to jump. On the home page a minimap shows the route and where you are (each stop is a link), and the bottom bar has previous/next stop buttons (also `←` / `→`). Every section page ends with previous/next section links.
 - **Fully static output.** `next.config.ts` sets `output: "export"`. Every route is pre-rendered to HTML in `out/`, so the site needs no server runtime and can be hosted on any CDN. This was chosen deliberately; see [Deployment](#deployment) for what it rules out.
 - **Trailing-slash URLs.** `trailingSlash: true` emits `/about/index.html`, which gives clean URLs on any static host without rewrite rules. Canonical URLs and the sitemap use the same form.
 - **Centralised metadata.** The root layout sets `metadataBase` and a title template, and pages call `createPageMetadata()` from `src/lib/metadata.ts` for consistent titles, descriptions, canonical URLs, and Open Graph tags.

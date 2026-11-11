@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 
 /**
  * The home page is a drive through a city at sunrise. Every section of the
- * site is a district with a gate on the avenue; its panel appears as the
- * camera reaches it. The road ends at a cliff facing an endless waterfall. All content here is plain server-rendered HTML; the 3D city
+ * site is a landmark building on the route; its panel appears as the camera
+ * pulls up to the entrance. The road ends at a cliff facing an endless waterfall. All content here is plain server-rendered HTML; the 3D city
  * is a progressive enhancement behind it.
  */
 export default function HomePage() {
@@ -40,12 +40,10 @@ export default function HomePage() {
           data-district
           className="pointer-events-none flex min-h-svh items-end pb-24 sm:pb-20"
         >
-          <Container
-            size="wide"
-            className={`flex ${index % 2 === 0 ? "justify-start" : "sm:justify-end"}`}
-          >
+          {/* Panels sit at the screen edges so the landmark's entrance stays in view. */}
+          <div className={`flex w-full px-5 sm:px-8 xl:px-12 ${index % 2 === 0 ? "justify-start" : "sm:justify-end"}`}>
             <DistrictPanel district={district} />
-          </Container>
+          </div>
         </section>
       ))}
 
