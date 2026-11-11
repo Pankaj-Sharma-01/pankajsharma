@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { CityCanvas } from "@/components/city/city-canvas";
+import { CityMinimap, type MinimapHandle } from "@/components/city/city-minimap";
 import type { CityGate } from "@/components/city/city-scene";
 import { isTypingTarget } from "@/lib/keyboard";
 
@@ -41,15 +42,19 @@ function usePrefersReducedMotion() {
 /**
  * Home page shell: tracks how far the visitor has scrolled through the
  * district sections, drives the 3D city from that, and renders the HUD:
- * a rail of stops, previous/next travel buttons (also ← and → keys), and a
- * progress readout.
+ * a route minimap, previous/next travel buttons (also ← and → keys), a
+ * progress readout, and a brief wipe whenever the sector changes.
  */
 export function CityExperience({ districts, children }: CityExperienceProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
   const barRef = useRef<HTMLDivElement>(null);
   const syncRef = useRef<HTMLSpanElement>(null);
+  const minimapRef = useRef<MinimapHandle>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  // Counts sector changes; 0 means the visitor has not moved yet, so no wipe plays on load.
+  const [wipe, setWipe] = useState(0);
+  const lastIndexRef = useRef(0);
   const reducedMotion = usePrefersReducedMotion();
 
   const gates = useMemo<CityGate[]>(
@@ -81,7 +86,13 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
       progressRef.current = progress;
       if (barRef.current) barRef.current.style.transform = `scaleX(${progress})`;
       if (syncRef.current) syncRef.current.textContent = `${Math.round(progress * 100)}%`.padStart(4, "0");
-      setActiveIndex(Math.round(position));
+      minimapRef.current?.setProgress(progress);
+      const index = Math.round(position);
+      if (index !== lastIndexRef.current) {
+        lastIndexRef.current = index;
+        setActiveIndex(index);
+        setWipe((count) => count + 1);
+      }
     };
 
     const schedule = () => {
@@ -105,7 +116,6 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
     ],
     [districts],
   );
-  const active = activeIndex > 0 ? stops[activeIndex] : undefined;
   const previous = stops[activeIndex - 1];
   const next = stops[activeIndex + 1];
 
@@ -138,68 +148,22 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
           except on their panels. */}
       <div className="relative z-10">{children}</div>
 
-      {/* Rail of stops: jump to any district. */}
-      <nav
-        aria-label="Stops on this page"
-        className="fixed top-1/2 left-4 z-30 hidden -translate-y-1/2 xl:block"
-      >
-        <ol className="space-y-1 font-mono text-[0.68rem] tracking-[0.2em] uppercase">
-          {stops.map((district, index) => {
-            const isActive = index === activeIndex;
-            return (
-              <li key={district.id}>
-                <a
-                  href={`#district-${district.id}`}
-                  aria-current={isActive ? "location" : undefined}
-                  className={`group flex items-center gap-2 rounded-sm py-1 pr-2 transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
-                    isActive ? "text-accent text-glow" : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`h-px transition-all duration-300 ${
-                      isActive ? "w-8 bg-accent shadow-[0_0_8px_var(--accent-glow)]" : "w-3 bg-border group-hover:w-5 group-hover:bg-muted"
-                    }`}
-                  />
-                  <span>{district.number}</span>
-                  <span
-                    className={`transition-opacity duration-300 ${
-                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
-                    }`}
-                  >
-                    {district.label}
-                  </span>
-                </a>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      <CityMinimap ref={minimapRef} syncRef={syncRef} stops={stops} activeIndex={activeIndex} />
 
-      {/* Bottom HUD: where you are, travel controls, and progress. */}
+      {/* Glitch wipe and light sweep on each sector change. Remounting restarts the animation. */}
+      {wipe > 0 ? <div key={wipe} aria-hidden="true" className="sector-wipe" /> : null}
+
+      {/* Bottom HUD: travel controls and the progress line. The readouts live in the minimap. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 px-4 pb-2 font-mono text-[0.65rem] tracking-[0.2em] text-muted uppercase sm:px-8">
-          <p aria-hidden="true" className="hidden truncate pb-1 sm:block">
-            {active?.id === "falls" ? (
-              <>
-                Terminus {"//"} <span className="text-hot">{active.label}</span>
-              </>
-            ) : active ? (
-              <>
-                Sector <span className="text-hot">{active.number}</span>/{String(districts.length).padStart(2, "0")}{" "}
-                {"//"} {active.label}
-              </>
-            ) : (
-              <>Use ← → or scroll to travel</>
-            )}
-          </p>
-
-          <div role="group" aria-label="Travel between stops" className="pointer-events-auto col-start-2 flex items-center gap-2">
+        <div className="flex justify-center px-4 pb-2 font-mono text-[0.65rem] tracking-[0.2em] text-muted uppercase">
+          <div role="group" aria-label="Travel between stops" className="pointer-events-auto flex items-center gap-2">
             <button
               type="button"
               onClick={() => travelTo(activeIndex - 1)}
               disabled={!previous}
-              className="grid size-10 place-items-center border border-accent/50 bg-background/80 text-accent backdrop-blur-sm transition-[background-color,box-shadow,opacity] hover:bg-accent/20 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-30"
+              aria-keyshortcuts="ArrowLeft"
+              title="Previous stop (←)"
+              className="grid size-10 place-items-center border border-accent/50 bg-background/80 text-accent backdrop-blur-sm transition-[background-color,box-shadow,opacity,transform] hover:bg-accent/20 active:scale-95 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-30"
             >
               <ChevronUp aria-hidden="true" className="size-4" />
               <span className="sr-only">Previous stop{previous ? `: ${previous.label}` : ""}</span>
@@ -208,7 +172,9 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
               type="button"
               onClick={() => travelTo(activeIndex + 1)}
               disabled={!next}
-              className="flex h-10 items-center gap-2 border border-accent/50 bg-background/80 px-4 text-xs tracking-[0.2em] text-accent uppercase backdrop-blur-sm transition-[background-color,box-shadow,opacity] hover:bg-accent/20 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-40"
+              aria-keyshortcuts="ArrowRight"
+              title="Next stop (→)"
+              className="flex h-10 items-center gap-2 border border-accent/50 bg-background/80 px-4 text-xs tracking-[0.2em] text-accent uppercase backdrop-blur-sm transition-[background-color,box-shadow,opacity,transform] hover:bg-accent/20 active:scale-95 hover:shadow-[0_0_20px_var(--accent-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-40"
             >
               {next ? (
                 <>
@@ -220,10 +186,6 @@ export function CityExperience({ districts, children }: CityExperienceProps) {
               <ChevronDown aria-hidden="true" className="cue-bob size-4" />
             </button>
           </div>
-
-          <p aria-hidden="true" className="col-start-3 hidden pb-1 text-right sm:block">
-            Sync <span ref={syncRef} className="text-sun">00%</span>
-          </p>
         </div>
         <div aria-hidden="true" className="h-0.5 bg-border/60">
           <div

@@ -40,7 +40,7 @@ export function DistrictPanel({ district }: DistrictPanelProps) {
         {district.label}
       </h2>
 
-      <p className="text-muted">{district.tagline}</p>
+      <p className="text-foreground/85">{district.tagline}</p>
 
       {online ? (
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-px border border-border bg-border">

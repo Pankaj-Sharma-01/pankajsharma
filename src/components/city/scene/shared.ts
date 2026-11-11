@@ -18,16 +18,11 @@ export type CityPalette = {
   skyHorizon: string;
 };
 
-// Layout, in world units. The journey has gates + 1 stops: one per gate,
-// then the falls. Gate i (1-based) sits GATE_AHEAD units in front of where
-// the camera is at stop i, so each gate is framed when its section is on
-// screen, and scrolling on drives through it. The last stop is the cliff.
-export const SPACING = 64;
-export const START_Z = 30;
-export const GATE_AHEAD = 38;
+// Street cross-section, in world units. The route's shape is in ../route.ts.
 export const ROAD_HALF_WIDTH = 12;
 export const SIDEWALK_WIDTH = 6;
-export const GATE_HEIGHT = 17;
+/** Distance from a street's centre line to the first building plots. */
+export const BUILDING_SETBACK = ROAD_HALF_WIDTH + SIDEWALK_WIDTH + 1;
 
 export const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 export const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
@@ -93,11 +88,17 @@ export const uvVertexShader = /* glsl */ `
   }
 `;
 
-/** World-position vertex shader with fog, for flat surfaces (road, lake). */
-export const worldVertexShader = /* glsl */ `
+/**
+ * Vertex shader for flat surfaces (road, lake). `vLocal` is the position in
+ * the object's own frame, so patterns follow a street whichever way it runs;
+ * `vWorld` is for distance-based effects.
+ */
+export const surfaceVertexShader = /* glsl */ `
+  varying vec3 vLocal;
   varying vec3 vWorld;
   #include <fog_pars_vertex>
   void main() {
+    vLocal = position;
     vec4 world = modelMatrix * vec4(position, 1.0);
     vWorld = world.xyz;
     vec4 mvPosition = viewMatrix * world;
@@ -105,3 +106,21 @@ export const worldVertexShader = /* glsl */ `
     #include <fog_vertex>
   }
 `;
+
+/** Soft white disc fading to transparent, for halos and pools of light. */
+export function createGlowTexture() {
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext("2d");
+  if (context) {
+    const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, "rgba(255,255,255,0.9)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.25)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, size, size);
+  }
+  return new THREE.CanvasTexture(canvas);
+}
