@@ -1,4 +1,4 @@
-import type { Education } from "@/types/content";
+import type { AcademicScore, Education } from "@/types/content";
 
 /** Most recent first. */
 export const education: readonly Education[] = [
@@ -9,6 +9,7 @@ export const education: readonly Education[] = [
     field: "Computer Science and Engineering",
     start: "2019-07",
     end: "2023-06",
+    notes: ["CGPA 8.6"],
   },
   {
     institution: "Kendriya Vidyalaya",
@@ -22,9 +23,24 @@ export const education: readonly Education[] = [
   },
 ];
 
-/** Test scores and academic awards, shown under the timeline. */
-export const academicHighlights: readonly string[] = [
-  "Class 10 (CBSE, 2017): 10.0 CGPA, awarded a central government scholarship",
-  "Class 12 (CBSE, 2019): 92.2% overall (Physics 93/100, Computer Science 91/100)",
-  "SAT: 2200/2400 (Math, Physics, Chemistry)",
+/** Test scores, shown as meters under the timeline. */
+export const academicScores: readonly AcademicScore[] = [
+  { label: "B.Tech", detail: "NIT Hamirpur, 2023", score: 8.6, outOf: 10, display: "8.6 CGPA" },
+  {
+    label: "Class 10",
+    detail: "CBSE, 2017",
+    score: 10,
+    outOf: 10,
+    display: "10.0 CGPA",
+    note: "Awarded a central government scholarship",
+  },
+  {
+    label: "Class 12",
+    detail: "CBSE, 2019",
+    score: 92.2,
+    outOf: 100,
+    display: "92.2%",
+    note: "Physics 93/100, Computer Science 91/100",
+  },
+  { label: "SAT", detail: "Math, Physics, Chemistry", score: 2200, outOf: 2400, display: "2200 / 2400" },
 ];

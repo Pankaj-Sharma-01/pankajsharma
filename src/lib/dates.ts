@@ -59,3 +59,22 @@ export function formatDateWithinYear(value: PictureDate): string | null {
   const date = new Date(Date.UTC(year, month - 1, day || 1));
   return (day ? dayMonth : monthOnly).format(date);
 }
+
+/** Whole months from `start` to `end` inclusive; `end` defaults to the current month. */
+export function monthsBetween(start: YearMonth, end?: YearMonth): number {
+  const [startYear, startMonth] = start.split("-").map(Number);
+  const now = new Date();
+  const [endYear, endMonth] = end ? end.split("-").map(Number) : [now.getUTCFullYear(), now.getUTCMonth() + 1];
+  return Math.max(1, (endYear - startYear) * 12 + (endMonth - startMonth) + 1);
+}
+
+/** 15 to "1 yr 3 mos". */
+export function formatDuration(months: number): string {
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const parts = [
+    years > 0 ? `${years} yr${years > 1 ? "s" : ""}` : "",
+    rest > 0 ? `${rest} mo${rest > 1 ? "s" : ""}` : "",
+  ];
+  return parts.filter(Boolean).join(" ");
+}

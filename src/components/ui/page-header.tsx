@@ -9,10 +9,12 @@ type PageHeaderProps = {
   sector?: NavItem["href"];
   /** Small label above the title, when the page isn't a numbered section. */
   eyebrow?: string;
+  /** One line of system output typed out under the description, e.g. "5 log entries loaded". */
+  status?: string;
 };
 
 /** Title block shared by top-level pages. Renders the page's single <h1>. */
-export function PageHeader({ title, description, sector, eyebrow }: PageHeaderProps) {
+export function PageHeader({ title, description, sector, eyebrow, status }: PageHeaderProps) {
   const label = sector ? sectorLabel(sector) : eyebrow;
   return (
     <header className="relative space-y-4 border-b border-border pb-8">
@@ -43,6 +45,14 @@ export function PageHeader({ title, description, sector, eyebrow }: PageHeaderPr
         {title}
       </h1>
       {description ? <p className="relative max-w-prose text-lg text-muted">{description}</p> : null}
+      {status ? (
+        <p className="relative font-mono text-xs tracking-wider text-accent">
+          <span aria-hidden="true" className="text-hot">
+            &gt;{" "}
+          </span>
+          <span className="typewriter">{status}</span>
+        </p>
+      ) : null}
     </header>
   );
 }

@@ -1,13 +1,13 @@
 import { Container } from "@/components/layout/container";
 import { PageHeader } from "@/components/ui/page-header";
-import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
+import { ConsoleWindow } from "@/components/ui/console-window";
 import { TagList } from "@/components/ui/tag-list";
 import { thoughts } from "@/data/thoughts";
 import { byDateDesc, formatDate } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
 
 const title = "Thoughts";
-const description = "Short notes on system design, AI engineering, and technical leadership.";
+const description = "Short transmissions on system design, AI engineering, and technical leadership.";
 
 export const metadata = createPageMetadata({ title, description, path: "/thoughts" });
 
@@ -16,10 +16,25 @@ export default function ThoughtsPage() {
 
   return (
     <Container className="py-16 sm:py-24 space-y-12">
-      <PageHeader sector="/thoughts" title={title} description={description} />
+      <PageHeader
+        sector="/thoughts"
+        title={title}
+        description={description}
+        status={sorted.length === 0 ? "channel open. listening." : `${sorted.length} transmissions received.`}
+      />
 
       {sorted.length === 0 ? (
-        <PlaceholderNotice>The first notes are coming soon.</PlaceholderNotice>
+        <ConsoleWindow title="thoughts.log" status="Standing by">
+          <p className="font-mono text-sm text-muted">
+            <span aria-hidden="true" className="text-hot">
+              &gt;{" "}
+            </span>
+            no transmissions yet. the first one is being written
+            <span aria-hidden="true" className="caret text-accent">
+              _
+            </span>
+          </p>
+        </ConsoleWindow>
       ) : (
         <div className="divide-y divide-border">
           {sorted.map((thought) => (

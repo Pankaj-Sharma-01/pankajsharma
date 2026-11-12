@@ -95,14 +95,14 @@ All content lives in typed files in `src/data/`. Each list starts empty, and its
 | Page            | File                      | Notes                                                    |
 | --------------- | ------------------------- | -------------------------------------------------------- |
 | Home, footer    | `src/data/site.ts`        | Name, role, intro, GitHub/LinkedIn links                 |
-| About           | `src/data/about.ts`       | Bio paragraphs, focus areas, interests                   |
-| Work Experience | `src/data/experience.ts`  | Most recent first; omit `end` for a current role         |
-| Education       | `src/data/education.ts`   | Most recent first                                        |
+| About           | `src/data/about.ts`       | Bio paragraphs, focus areas, interests; shown as an interactive terminal |
+| Work Experience | `src/data/experience.ts`  | Most recent first; omit `end` for a current role. Shown as a timeline with expandable log entries |
+| Education       | `src/data/education.ts`   | Most recent first, plus `academicScores` (shown as meters) |
 | Projects        | `src/data/projects.ts`    | Grouped as `production` or `personal`; optional headline `metric` and `url` |
 | Books           | `src/data/books.ts`       | Reviews: `title`, `author`, `rating` (0–10), `thoughts`  |
 | Thoughts        | `src/data/thoughts.ts`    | Sorted newest first automatically; `slug` makes `#anchor` links |
 | Pictures        | `src/data/pictures.ts`    | See [Adding pictures](#adding-pictures)                  |
-| Health          | `src/data/health.ts`      | Personal records, shown in the order listed              |
+| Health          | `src/data/health.ts`      | Personal records; give a run a `distanceKm` and the page works out pace and speed |
 | Navigation      | `src/data/navigation.ts`  | Header links (the sitemap uses this list too)            |
 
 Dates are written as `"YYYY-MM"` (CV entries, books) or `"YYYY-MM-DD"` (thoughts, records), and are formatted in UTC so they never shift by a day.

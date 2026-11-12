@@ -1,83 +1,49 @@
 import { Container } from "@/components/layout/container";
-import { ExternalLink } from "@/components/ui/external-link";
+import { RunTelemetry } from "@/components/sections/run-telemetry";
+import { ConsoleWindow } from "@/components/ui/console-window";
 import { PageHeader } from "@/components/ui/page-header";
 import { PlaceholderNotice } from "@/components/ui/placeholder-notice";
 import { Section } from "@/components/ui/section";
 import { personalRecords } from "@/data/health";
-import { formatDate } from "@/lib/dates";
 import { createPageMetadata } from "@/lib/metadata";
-import type { PersonalRecord, PersonalRecordCategory } from "@/types/content";
 
 const title = "Health";
-const description = "Training, personal records, and staying active.";
+const description = "Body telemetry: race times and the pace behind them.";
 
 export const metadata = createPageMetadata({ title, description, path: "/health" });
 
-const categories: readonly { id: PersonalRecordCategory; title: string }[] = [
-  { id: "running", title: "Running" },
-  { id: "strength", title: "Strength" },
-];
-
-function RecordTile({ record }: { record: PersonalRecord }) {
-  const details = [record.context, record.date ? formatDate(record.date) : undefined].filter(
-    (detail): detail is string => Boolean(detail),
-  );
-
-  return (
-    <div className="reveal hud-frame hud-frame-interactive group flex flex-col gap-2 p-4">
-      <dt className="hud-label">{record.event}</dt>
-      <dd className="text-sunrise w-fit font-mono text-2xl font-bold tracking-tight tabular-nums transition-transform group-hover:translate-x-1 sm:text-3xl">
-        {record.result}
-      </dd>
-      {details.length > 0 ? (
-        <dd className="text-xs text-muted">
-          {record.url ? (
-            <ExternalLink href={record.url}>{details.join(" · ")}</ExternalLink>
-          ) : (
-            details.join(" · ")
-          )}
-        </dd>
-      ) : null}
-    </div>
-  );
-}
-
-function PersonalRecords() {
-  if (personalRecords.length === 0) {
-    return <PlaceholderNotice>Personal records are coming soon.</PlaceholderNotice>;
-  }
-
-  return (
-    <div className="space-y-8">
-      {categories.map((category) => {
-        const records = personalRecords.filter((record) => record.category === category.id);
-        if (records.length === 0) return null;
-        return (
-          <div key={category.id} className="space-y-3">
-            <h3 className="hud-label">{category.title}</h3>
-            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {records.map((record) => (
-                <RecordTile key={record.event} record={record} />
-              ))}
-            </dl>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export default function HealthPage() {
+  const running = personalRecords.filter((record) => record.category === "running");
+
   return (
     <Container className="py-16 sm:py-24 space-y-14">
-      <PageHeader sector="/health" title={title} description={description} />
+      <PageHeader
+        sector="/health"
+        title={title}
+        description={description}
+        status={`${personalRecords.length} personal bests on record.`}
+      />
 
-      <Section id="records" title="Personal records">
-        <PersonalRecords />
+      <Section id="records" title="Personal bests">
+        {running.length === 0 ? (
+          <PlaceholderNotice>No records logged yet.</PlaceholderNotice>
+        ) : (
+          <RunTelemetry records={running} />
+        )}
       </Section>
 
-      <Section id="activities" title="Recent activities">
-        <PlaceholderNotice>Activity tracking is coming soon.</PlaceholderNotice>
+      <Section id="activities" title="Activity feed">
+        <ConsoleWindow title="activity.log" status="Offline">
+          <p className="font-mono text-sm text-muted">
+            <span aria-hidden="true" className="text-hot">
+              &gt;{" "}
+            </span>
+            no uplink yet. live training data will stream here
+            <span aria-hidden="true" className="caret text-accent">
+              _
+            </span>
+          </p>
+        </ConsoleWindow>
       </Section>
     </Container>
   );
