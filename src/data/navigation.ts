@@ -1,37 +1,37 @@
 import type { NavItem } from "@/types/site";
 
-/** The site's sections, in order. Also drives the sitemap and the city's gates. */
+/** The site's sections, in order. Also drives the sitemap and the city's landmarks. */
 export const mainNav: readonly NavItem[] = [
   {
     label: "About",
     href: "/about",
-    description: "Who I am, what I build, and what I care about as an engineer.",
+    description: "The person behind the terminal: what I build, and what I care about.",
   },
   {
     label: "Experience",
     href: "/experience",
-    description: "Roles, ownership, and the systems I've been responsible for.",
+    description: "Mission log: roles held, systems owned, results shipped.",
   },
-  { label: "Education", href: "/education", description: "Where the foundations were laid." },
+  { label: "Education", href: "/education", description: "Origin files: where the foundations were laid." },
   {
     label: "Projects",
     href: "/projects",
-    description: "Case studies in backend and production AI systems.",
+    description: "The build archive: production AI systems and side experiments.",
   },
   {
     label: "Books",
     href: "/books",
-    description: "Book reviews, rated out of 10, with what stayed with me.",
+    description: "Reading log: every book rated out of 10, with what it left behind.",
   },
   {
     label: "Thoughts",
     href: "/thoughts",
-    description: "Short notes on system design, AI engineering, and leadership.",
+    description: "Short transmissions on system design, AI engineering, and leadership.",
   },
-  { label: "Pictures", href: "/pictures", description: "Life in pictures, over the years." },
+  { label: "Pictures", href: "/pictures", description: "Memory bank: life in frames, year by year." },
   {
     label: "Health",
     href: "/health",
-    description: "Personal records, training, and staying active.",
+    description: "Body telemetry: race times and the pace behind them.",
   },
 ];

@@ -37,6 +37,19 @@ export type Education = {
   notes?: readonly string[];
 };
 
+/** A test score, shown as a meter. */
+export type AcademicScore = {
+  /** e.g. "Class 12". */
+  label: string;
+  /** Board, year, or subjects. */
+  detail?: string;
+  score: number;
+  outOf: number;
+  /** The score as you want it written, e.g. "92.2%". */
+  display: string;
+  note?: string;
+};
+
 export type ProjectCategory = "production" | "personal";
 
 export type Project = {
@@ -83,6 +96,8 @@ export type PersonalRecord = {
   event: string;
   /** Display value as you want it shown, e.g. "22:47" or "13 reps". */
   result: string;
+  /** Race distance in kilometres. With a time as `result`, the page works out the pace. */
+  distanceKm?: number;
   /** When it was set, if you want to show it. */
   date?: IsoDate;
   /** Race or place, e.g. "Tuffman Global 10K". */
