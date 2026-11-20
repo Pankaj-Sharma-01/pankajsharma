@@ -1,13 +1,15 @@
-import { ROUTE, type Turn } from "../route";
+import { ROUTE, type Landmark } from "../route";
 import { AMBER, BANDS, CYAN, CityBuilder, FINS, GLOW, PINK, PLAIN, TRUSS, VIOLET, WINDOWS } from "./buildings";
 
 /**
  * Landmark buildings: one per site section, each with its own silhouette,
  * accent colours, and a glowing drive-through lobby.
  *
- * Built in the landmark's own frame: the entrance is on the +z face, the
- * camera drives in heading -z, turns inside, and leaves through the side
- * face on `turn` (+x for a right turn, -x for a left) or straight out the back.
+ * Built in the landmark's own frame: the entrance is on the +z face and the
+ * camera drives in heading -z. The ground floor is an open colonnade, so the
+ * road can turn through it at any angle; light strips on the floor trace
+ * the way through. One landmark is a wide hall where the road makes a U-turn
+ * round a central island, leaving by a second door beside the first.
  */
 
 const H = ROUTE.landmarkHalf;
@@ -159,70 +161,130 @@ const pulse: Design = (b, accent, secondary) => {
 
 const DESIGNS: readonly Design[] = [ziggurat, twins, strata, crane, stack, observatory, screens, pulse];
 
-/** Ground floor: the footprint minus the drive-through, with light lines to follow. */
-function lobby(b: CityBuilder, turn: Turn, accent: number, secondary: number) {
-  const wall = (x: number, z: number, w: number, d: number) => b.box(x, 0, z, w, P, d, PLAIN, accent, 0.25);
-  // Guide lights low and high on a wall face: `along` is the axis the strip runs on.
-  const guide = (x: number, z: number, length: number, along: "x" | "z") => {
-    for (const [y, neon] of [
-      [1, accent],
-      [P - 1.6, secondary],
-    ]) {
-      b.box(x, y, z, along === "x" ? length : 0.15, 0.3, along === "z" ? length : 0.15, GLOW, neon, 0);
-    }
+/** Rotates a local offset by a heading (0 = -z, clockwise). */
+function along(heading: number, across: number, ahead: number) {
+  return {
+    x: Math.cos(heading) * across + Math.sin(heading) * ahead,
+    z: Math.sin(heading) * across - Math.cos(heading) * ahead,
   };
-  const inset = W - 0.12;
-
-  if (turn === 0) {
-    for (const side of [-1, 1]) {
-      wall((side * (H + W)) / 2, 0, H - W, SIDE);
-      guide(side * inset, 0, SIDE, "z");
-    }
-  } else {
-    // Outer block (full depth), back block, and the block inside the turn.
-    wall((-turn * (H + W)) / 2, 0, H - W, SIDE);
-    wall((turn * (H - W)) / 2, -(H + W) / 2, H + W, H - W);
-    wall((turn * (H + W)) / 2, (H + W) / 2, H - W, H - W);
-    guide(-turn * inset, (H - W) / 2, H + W, "z");
-    guide(turn * inset, (H + W) / 2, H - W, "z");
-    guide((turn * (H - W)) / 2, -inset, H + W, "x");
-    guide((turn * (H + W)) / 2, inset, H - W, "x");
-  }
-
-  // Ceiling light bars along the way through.
-  for (const z of [12, 5]) b.box(0, P - 0.35, z, W * 2 - 2, 0.2, 0.5, GLOW, secondary, 0);
-  if (turn === 0) {
-    for (const z of [-5, -12]) b.box(0, P - 0.35, z, W * 2 - 2, 0.2, 0.5, GLOW, secondary, 0);
-  } else {
-    for (const x of [5, 12]) b.box(turn * x, P - 0.35, 0, 0.5, 0.2, W * 2 - 2, GLOW, secondary, 0);
-  }
 }
 
-/** Glowing double frame around an opening, on a face perpendicular to `axis`. */
-function portal(b: CityBuilder, axis: "x" | "z", face: number, accent: number, secondary: number) {
-  for (const [grow, neon, offset] of [
+/**
+ * Glowing double frame around an opening at (x, z), for travel along
+ * `heading`. `outward` is -1 for an entrance (frame stands before the
+ * opening) and 1 for an exit (frame stands after it).
+ */
+function portal(
+  b: CityBuilder,
+  x: number,
+  z: number,
+  heading: number,
+  outward: -1 | 1,
+  height: number,
+  accent: number,
+  secondary: number,
+) {
+  for (const [grow, neon, distance] of [
     [0.3, accent, 0.25],
     [1.3, secondary, 0.12],
   ]) {
-    const at = face + Math.sign(face) * offset;
     const half = W + grow;
-    const height = P + grow;
+    const top = height + grow;
+    const offset = outward * distance;
+    const centre = along(heading, 0, offset);
     for (const side of [-1, 1]) {
-      if (axis === "z") b.box(side * half, 0, at, 0.45, height, 0.3, GLOW, neon, 0);
-      else b.box(at, 0, side * half, 0.3, height, 0.45, GLOW, neon, 0);
+      const pillar = along(heading, side * half, offset);
+      b.box(x + pillar.x, 0, z + pillar.z, 0.45, top, 0.3, GLOW, neon, 0, 0, -heading);
     }
-    if (axis === "z") b.box(0, height, at, half * 2 + 0.45, 0.45, 0.3, GLOW, neon, 0);
-    else b.box(at, height, 0, 0.3, 0.45, half * 2 + 0.45, GLOW, neon, 0);
+    b.box(x + centre.x, top, z + centre.z, half * 2 + 0.45, 0.45, 0.3, GLOW, neon, 0, 0, -heading);
   }
 }
 
-/** Adds landmark number `index` to the builder and returns its neon colour indices. */
-export function buildLandmark(b: CityBuilder, index: number, turn: Turn) {
-  const [accent, secondary] = COLOURS[index % COLOURS.length];
-  lobby(b, turn, accent, secondary);
-  portal(b, "z", H, accent, secondary);
-  if (turn === 0) portal(b, "z", -H, accent, secondary);
-  else portal(b, "x", turn * H, accent, secondary);
-  DESIGNS[index % DESIGNS.length](b, accent, secondary);
+/**
+ * Ground floor: columns round the edge (leaving the way through clear), and
+ * light strips along the lane: kerb lights low on each side, a dashed centre
+ * line, and bars across the ceiling.
+ */
+function lobby(b: CityBuilder, landmark: Landmark, accent: number, secondary: number) {
+  const { lane, halfWidth, front, back, height } = landmark;
+  const clearOfLane = (x: number, z: number) =>
+    lane.every((point) => Math.hypot(point.x - x, point.z - z) > W + 1.2);
+
+  // Columns every few units round the perimeter.
+  const spacing = 6.5;
+  const width = halfWidth * 2;
+  const depth = front - back;
+  const perimeter = 2 * (width + depth);
+  const count = Math.round(perimeter / spacing);
+  for (let index = 0; index < count; index++) {
+    let at = (index / count) * perimeter;
+    let x: number;
+    let z: number;
+    if (at < width) [x, z] = [-halfWidth + at, front];
+    else if ((at -= width) < depth) [x, z] = [halfWidth, front - at];
+    else if ((at -= depth) < width) [x, z] = [halfWidth - at, back];
+    else [x, z] = [-halfWidth, back + (at - width)];
+    const inset = { x: x - Math.sign(x) * 0.6 * (Math.abs(x) >= halfWidth - 0.01 ? 1 : 0), z };
+    if (Math.abs(z - front) < 0.01) inset.z -= 0.6;
+    if (Math.abs(z - back) < 0.01) inset.z += 0.6;
+    if (!clearOfLane(inset.x, inset.z)) continue;
+    b.box(inset.x, 0, inset.z, 0.9, height, 0.9, PLAIN, accent, 0.4);
+    b.box(inset.x, 0, inset.z, 1.1, 0.25, 1.1, GLOW, secondary, 0);
+  }
+
+  lane.forEach((point, index) => {
+    const yaw = -point.heading;
+    if (index % 2 === 0) {
+      for (const side of [-1, 1]) {
+        const kerb = along(point.heading, side * (W - 0.7), 0);
+        b.box(point.x + kerb.x, 0.05, point.z + kerb.z, 0.22, 0.08, 1.6, GLOW, accent, 0, 0, yaw);
+      }
+    }
+    if (index % 2 === 1) b.box(point.x, 0.05, point.z, 0.16, 0.05, 1.2, GLOW, AMBER, 0, 0, yaw);
+    if (index % 3 === 0) b.box(point.x, height - 0.35, point.z, W * 2 - 2, 0.2, 0.5, GLOW, secondary, 0, 0, yaw);
+  });
+
+  // The hall has its own roof; a regular landmark's tower is its ceiling.
+  if (landmark.uTurn) b.box(0, height, (front + back) / 2, width, 0.6, depth, PLAIN, accent, 0.5);
+}
+
+/** Round island in the middle of the U-turn hall, ringed with light. */
+function island(b: CityBuilder, landmark: Landmark, accent: number, secondary: number) {
+  const radius = ROUTE.uTurnRadius - W - 1.5;
+  const size = radius * 1.3;
+  b.box(0, 0, 0, size, landmark.height, size, FINS, accent, 0.6);
+  for (const y of [0.3, landmark.height * 0.5, landmark.height - 0.6]) b.crown(0, y, 0, size + 0.4, size + 0.4, secondary);
+  // A screen on each face you pass as you go round.
+  for (const [x, z, rotationY] of [
+    [0, size / 2 + 0.05, 0],
+    [size / 2 + 0.05, 0, Math.PI / 2],
+    [-size / 2 - 0.05, 0, -Math.PI / 2],
+    [0, -size / 2 - 0.05, Math.PI],
+  ]) {
+    b.anchors.push({ x, y: landmark.height / 2, z, width: size * 0.8, height: landmark.height * 0.55, rotationY, kind: "screen" });
+  }
+}
+
+/** Adds a landmark to the builder and returns its neon colour indices. */
+export function buildLandmark(b: CityBuilder, landmark: Landmark) {
+  const [accent, secondary] = COLOURS[landmark.index % COLOURS.length];
+  lobby(b, landmark, accent, secondary);
+  portal(b, landmark.entranceX, landmark.front, 0, -1, landmark.height, accent, secondary);
+  portal(b, landmark.exit.x, landmark.exit.z, landmark.exit.heading, 1, landmark.height, accent, secondary);
+
+  if (landmark.uTurn) {
+    island(b, landmark, accent, secondary);
+    // The tower stands on the hall's roof, set back from the doors.
+    b.offset = { x: 0, y: landmark.height + 0.6 - P, z: (landmark.front + landmark.back) / 2 };
+  }
+  const anchorsBefore = b.anchors.length;
+  DESIGNS[landmark.index % DESIGNS.length](b, accent, secondary);
+  // Signs a design adds directly need the same offset as its boxes.
+  for (const anchor of b.anchors.slice(anchorsBefore)) {
+    anchor.x += b.offset.x;
+    anchor.y += b.offset.y;
+    anchor.z += b.offset.z;
+  }
+  b.offset = { x: 0, y: 0, z: 0 };
   return { accent, secondary };
 }
