@@ -3,11 +3,12 @@ import * as THREE from "three";
 import { createRandom, type Random } from "@/lib/random";
 
 import { CITY_CONFIG } from "./city-config";
-import { ROUTE, createRoute, type RouteLeg } from "./route";
+import { ROUTE, createRoute, headingVector, rightVector, type Landmark as RouteLandmark, type Street } from "./route";
 import { createAir } from "./scene/air";
 import { CityBuilder, streetLots } from "./scene/buildings";
 import { abyssLots, createFalls } from "./scene/falls";
 import { buildLandmark } from "./scene/landmarks";
+import { createOccupancy, streetToWorld } from "./scene/layout";
 import { createSteam, createWrappedPoints, pointScale } from "./scene/particles";
 import { createPipeline } from "./scene/post";
 import { createStreet } from "./scene/road";
@@ -18,8 +19,9 @@ import { createSky } from "./scene/sky";
 /**
  * The home page city: a drive through a neon megacity at sunrise, steered
  * by the page's scroll position. The route (./route.ts) winds through the
- * streets; each section of the site is a landmark building you drive into,
- * turn inside, and leave by another door. The last street ends at a cliff
+ * streets, turning at varied angles; each section of the site is a landmark
+ * building you drive into, turn inside, and leave by another door, and one
+ * is a hall where the road makes a U-turn. The last street ends at a cliff
  * facing an endless waterfall.
  *
  * Framework-free on purpose: React only mounts the canvas and passes in
@@ -62,9 +64,9 @@ export type CityScene = {
   dispose: () => void;
 };
 
-const H = ROUTE.landmarkHalf;
 const W = ROUTE.portalHalfWidth;
-const P = ROUTE.portalHeight;
+/** How far the first street's road reaches back behind the starting point. */
+const BEHIND_START = 120;
 /** Streets and landmarks this many legs either side of the camera are drawn. */
 const VIEW_LEGS = 1;
 /** Switch to the next street's set this far before reaching a corner, while the lobby hides it. */
@@ -100,7 +102,7 @@ function entranceLabel(text: string, color: string, font: string) {
 }
 
 /** The wall you face on entering a lobby: sector number, name, and which way to turn. */
-function lobbySign(gate: CityGate, turn: number, color: string, secondary: string, palette: CityPalette, font: string) {
+function lobbySign(gate: CityGate, turn: number, uTurn: boolean, color: string, secondary: string, palette: CityPalette, font: string) {
   return textTexture(1024, 512, (context) => {
     context.fillStyle = palette.background;
     context.fillRect(0, 0, 1024, 512);
@@ -116,8 +118,18 @@ function lobbySign(gate: CityGate, turn: number, color: string, secondary: strin
     context.fillStyle = palette.foreground;
     context.font = `700 72px ${font}`;
     context.fillText(gate.label.toUpperCase(), 512, 350, 900);
-    // Chevrons pointing toward the exit.
+    // Chevrons pointing toward the exit, or a U-turn arrow.
     context.fillStyle = secondary;
+    if (uTurn) {
+      context.strokeStyle = secondary;
+      context.lineWidth = 16;
+      context.beginPath();
+      context.arc(512, 446, 30, Math.PI, 0, turn < 0);
+      context.stroke();
+      context.font = `700 40px ${font}`;
+      context.fillText("U-TURN", 512 + turn * 150, 446);
+      return;
+    }
     for (let chevron = 0; chevron < 5; chevron++) {
       const x = 512 + turn * (chevron - 2) * 70;
       context.beginPath();
@@ -144,7 +156,8 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
   const random: Random = createRandom(2077);
   const density = lowPower ? CITY_CONFIG.density.reduced : CITY_CONFIG.density.full;
   const route = createRoute(gates.length);
-  const lastLeg = route.legs[route.legs.length - 1];
+  const lastStreet = route.streets[route.streets.length - 1];
+  const occupancy = createOccupancy(route, BEHIND_START);
   const neonCss = [palette.accent, palette.hot, palette.sun, palette.ultra];
   const atlases = createSignAtlases(palette, fonts, random);
 
@@ -161,7 +174,8 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
   scene.add(sky.mesh);
 
   // Ground and grid, both ending exactly at the cliff at the end of the last street.
-  const cliffWorldZ = lastLeg.startZ - lastLeg.length - ROUTE.cliffGap;
+  // The last street always heads north, toward the sun.
+  const cliffWorldZ = lastStreet.startZ - lastStreet.length - ROUTE.cliffGap;
   const groundFarZ = 520;
   const groundLength = groundFarZ - cliffWorldZ;
   const ground = new THREE.Mesh(
@@ -169,50 +183,40 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
     new THREE.MeshBasicMaterial({ color: new THREE.Color(palette.background) }),
   );
   ground.rotation.x = -Math.PI / 2;
-  ground.position.set(lastLeg.startX, 0, (groundFarZ + cliffWorldZ) / 2);
+  ground.position.set(lastStreet.startX, 0, (groundFarZ + cliffWorldZ) / 2);
   scene.add(ground);
 
   const grid = new THREE.GridHelper(groundLength, Math.round(groundLength / 8), palette.ultra, palette.ultra);
   const gridMaterial = grid.material as THREE.LineBasicMaterial;
   gridMaterial.transparent = true;
   gridMaterial.opacity = 0.35;
-  grid.position.set(lastLeg.startX, 0.02, (groundFarZ + cliffWorldZ) / 2);
+  grid.position.set(lastStreet.startX, 0.02, (groundFarZ + cliffWorldZ) / 2);
   scene.add(grid);
 
   // --- Streets ---------------------------------------------------------
 
-  /** Rows of blocks on one side. A street inside a U-turn shares its block with the street opposite. */
-  function columnsFor(leg: RouteLeg, side: -1 | 1) {
-    const next = route.legs[leg.index + 1];
-    const previous = route.legs[leg.index - 1];
-    const opensU = leg.turnAtEnd === side && next?.turnAtEnd === side;
-    const closesU = leg.turnAtStart === side && previous?.turnAtStart === side;
-    return opensU || closesU ? Math.min(3, density.columns) : density.columns;
-  }
-
-  function createLeg(leg: RouteLeg) {
+  function createLeg(leg: Street) {
     const group = new THREE.Group();
     group.position.set(leg.startX, 0, leg.startZ);
     group.rotation.y = leg.rotationY;
     const isFirst = leg.index === 0;
-    const isLast = leg === lastLeg;
+    const isLast = leg === lastStreet;
     const cliffZ = -(leg.length + ROUTE.cliffGap);
-    // A street runs between the faces of the landmarks at its ends.
-    const streetFrom = isFirst ? 120 : -H;
-    const streetTo = isLast ? cliffZ : -(leg.length - H);
+    // The street runs between the landmarks at its ends, out in the open.
+    const streetFrom = isFirst ? BEHIND_START : leg.openFrom;
+    const streetTo = isLast ? cliffZ : leg.openTo;
 
     const builder = new CityBuilder(random, !lowPower);
-    const sharedCorners: { z: number; side: -1 | 1 }[] = [];
-    if (leg.turnAtStart !== 0) sharedCorners.push({ z: 0, side: leg.turnAtStart });
-    if (leg.turnAtEnd !== 0) sharedCorners.push({ z: -leg.length, side: leg.turnAtEnd });
+    // Lots reach a little past each end to fill the corners; any that hit
+    // another street, a landmark, or an earlier lot are dropped.
     const lots = streetLots(random, {
-      from: isFirst ? 140 : -(H + 2),
-      to: isLast ? cliffZ + 4 : -(leg.length - H - 2),
-      columns: [columnsFor(leg, -1), columnsFor(leg, 1)],
-      sharedCorners,
-      extendPast: leg.turnAtEnd === 0 ? 0 : leg.turnAtEnd === 1 ? -1 : 1,
+      from: isFirst ? BEHIND_START + 20 : streetFrom + 26,
+      to: isLast ? cliffZ + 4 : streetTo - 26,
+      columns: density.columns,
     });
-    for (const lot of lots) builder.build(lot);
+    for (const lot of lots) {
+      if (occupancy.claim(streetToWorld(leg, lot.x, lot.z), lot.width, lot.depth, leg.index)) builder.build(lot);
+    }
 
     // Street furniture, spread along the part of the street you drive.
     const propFrom = Math.min(streetFrom, 70) - 8;
@@ -227,7 +231,7 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
     }
     for (let index = 0; index < density.figuresPerLeg; index++) builder.figure(side(), along());
     for (let index = 0; index < density.cablesPerLeg; index++) builder.cable(along(), 9 + random() * 7);
-    if (leg.index % 2 === 1) builder.skybridge(-leg.length * 0.45, 37 + random() * 5);
+    if (leg.index % 2 === 1) builder.skybridge((streetFrom + streetTo) / 2, 37 + random() * 5);
 
     let falls: ReturnType<typeof createFalls> | null = null;
     if (isLast) {
@@ -246,7 +250,7 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
       to: streetTo,
       crosswalkZ: isLast ? null : streetTo + 9,
       rail: leg.index % 2 === 0 && !isLast,
-      facesSun: leg.dirZ === -1,
+      facesSun: Math.abs(leg.heading) < Math.PI / 6,
       cars: density.carsPerLeg,
       glowTexture: atlases.glow,
     });
@@ -278,25 +282,25 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
   // --- Landmarks -------------------------------------------------------
 
   function createLandmark(gate: CityGate, index: number) {
-    const leg = route.legs[index];
-    const corner = route.corners[index];
+    const landmark: RouteLandmark = route.landmarks[index];
     const group = new THREE.Group();
-    group.position.set(corner.x, 0, corner.z);
-    group.rotation.y = leg.rotationY;
+    group.position.set(landmark.x, 0, landmark.z);
+    group.rotation.y = landmark.rotationY;
+    const { height, front, back, halfWidth } = landmark;
 
     const builder = new CityBuilder(random, true);
-    const { accent, secondary } = buildLandmark(builder, index, leg.turnAtEnd);
+    const { accent, secondary } = buildLandmark(builder, landmark);
     const buildings = builder.createMesh(palette);
     const signs = createSigns(builder.anchors, atlases, palette, random);
     group.add(buildings.mesh, signs.group);
 
     // Lobby floor.
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(H * 2, H * 2),
+      new THREE.PlaneGeometry(halfWidth * 2, front - back),
       new THREE.MeshBasicMaterial({ color: new THREE.Color(palette.background).lerp(new THREE.Color(palette.border), 0.35) }),
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0.05;
+    floor.position.set(0, 0.05, (front + back) / 2);
     group.add(floor);
 
     // Name over the entrance.
@@ -308,24 +312,23 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
         depthWrite: false,
       }),
     );
-    label.position.set(0, P + 3.4, H + 0.6);
+    label.position.set(landmark.entranceX, height + 3.4, front + 0.6);
     group.add(label);
 
-    // The wall facing you as you drive in.
-    if (leg.turnAtEnd !== 0) {
-      const wall = new THREE.Mesh(
-        new THREE.PlaneGeometry(13, 6.5),
-        new THREE.MeshBasicMaterial({
-          map: lobbySign(gate, leg.turnAtEnd, neonCss[accent], neonCss[secondary], palette, fonts.display),
-        }),
-      );
-      wall.position.set(0, 5.4, -W + 0.2);
-      group.add(wall);
-    }
+    // A sign hanging over the lane just before the turn: sector, name, and which way.
+    const signPoint = landmark.lane.find((point) => point.z < front - 5) ?? landmark.lane[0];
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(9, 4.5),
+      new THREE.MeshBasicMaterial({
+        map: lobbySign(gate, Math.sign(landmark.turn), landmark.uTurn, neonCss[accent], neonCss[secondary], palette, fonts.display),
+      }),
+    );
+    sign.position.set(signPoint.x, height - 2.6, signPoint.z);
+    group.add(sign);
 
     // Faint holographic curtain across the entrance, also the click target.
     const hitArea = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 2, P),
+      new THREE.PlaneGeometry(W * 2, height),
       new THREE.MeshBasicMaterial({
         color: neonCss[accent],
         transparent: true,
@@ -336,7 +339,7 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
         fog: false,
       }),
     );
-    hitArea.position.set(0, P / 2, H + 0.3);
+    hitArea.position.set(landmark.entranceX, height / 2, front + 0.3);
     group.add(hitArea);
 
     scene.add(group);
@@ -352,25 +355,20 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
     };
   }
 
-  const legObjects = route.legs.map(createLeg);
+  const legObjects = route.streets.map(createLeg);
   const landmarks = gates.map(createLandmark);
   type Landmark = (typeof landmarks)[number];
 
   // --- Far skyline: big towers out in the haze, beyond the built-up streets ---
   const skyline = new CityBuilder(random, false);
-  const xs = route.corners.map((corner) => corner.x).concat(0);
-  const routeMinX = Math.min(...xs);
-  const routeMaxX = Math.max(...xs);
-  for (let index = 0; index < density.farSkyline; index++) {
-    const z = lerp(cliffWorldZ + 90, 430, random());
-    const behindStart = z > 300;
-    const offset = 190 + random() * 260;
-    const x = behindStart
-      ? lerp(routeMinX - 300, routeMaxX + 300, random())
-      : random() < 0.5
-        ? routeMinX - offset
-        : routeMaxX + offset;
-    skyline.farTower(x, z, 28 + random() * 34, 110 + random() * 230);
+  const xs = route.streets.map((street) => street.startX);
+  const zs = route.streets.map((street) => street.startZ);
+  const bounds = { minX: Math.min(...xs) - 420, maxX: Math.max(...xs) + 420, maxZ: 430, minZ: cliffWorldZ + 90 };
+  for (let placed = 0, attempt = 0; placed < density.farSkyline && attempt < density.farSkyline * 30; attempt++) {
+    const point = { x: lerp(bounds.minX, bounds.maxX, random()), z: lerp(bounds.minZ, Math.min(bounds.maxZ, Math.max(...zs) + 430), random()) };
+    if (occupancy.clearance(point) < 150) continue;
+    skyline.farTower(point.x, point.z, 28 + random() * 34, 110 + random() * 230);
+    placed++;
   }
   const skylineMesh = skyline.createMesh(palette);
   scene.add(skylineMesh.mesh);
@@ -379,15 +377,21 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
   const air = createAir({
     palette,
     random,
-    landmarks: route.corners,
-    blimps: route.legs
-      .filter((leg) => leg.dirZ === -1)
+    landmarks: route.landmarks,
+    // Blimps drift alongside the streets that head toward the sun.
+    blimps: route.streets
+      .filter((street) => Math.abs(street.heading) < Math.PI / 4)
       .filter((_, index) => index % 2 === 0)
-      .map((leg, index) => ({
-        x: leg.startX + (index % 2 === 0 ? 46 : -46),
-        z: leg.startZ - leg.length / 2,
-        heading: 0,
-      })),
+      .map((street, index) => {
+        const forward = headingVector(street.heading);
+        const right = rightVector(street.heading);
+        const side = index % 2 === 0 ? 46 : -46;
+        return {
+          x: street.startX + forward.x * (street.length / 2) + right.x * side,
+          z: street.startZ + forward.z * (street.length / 2) + right.z * side,
+          heading: street.rotationY,
+        };
+      }),
     flyersPerLandmark: density.flyersPerLandmark,
     atlases,
   });
@@ -525,7 +529,7 @@ export function createCityScene(options: CitySceneOptions): CityScene | null {
     fog.density = lerp(CITY_CONFIG.fog.street, CITY_CONFIG.fog.cliff, arrival);
 
     // Draw only the streets and landmarks around the camera.
-    const current = route.legIndexAt(distance + SWITCH_AHEAD);
+    const current = route.streetIndexAt(distance + SWITCH_AHEAD);
     legObjects.forEach((leg, index) => {
       leg.group.visible = Math.abs(index - current) <= VIEW_LEGS;
       if (leg.group.visible) leg.update(elapsed, delta, distance, arrival);

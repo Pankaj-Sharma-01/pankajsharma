@@ -33,8 +33,11 @@ export function CityMinimap({ stops, activeIndex, syncRef, ref }: CityMinimapPro
 
   const map = useMemo(() => {
     const route = createRoute(stops.length - 2);
-    // World (x, z) to map (x, y): north (-z) runs to the right.
-    const project = (point: { x: number; z: number }) => ({ x: -point.z, y: point.x });
+    // World (x, z) to map (x, y): north (-z) runs to the right. Rounded so
+    // the server and the browser (whose trigonometry can differ in the last
+    // digits) render identical markup.
+    const round = (value: number) => Math.round(value * 10) / 10;
+    const project = (point: { x: number; z: number }) => ({ x: round(-point.z), y: round(point.x) });
     const samples = Math.ceil(route.totalLength / 4);
     const points = Array.from({ length: samples + 1 }, (_, index) =>
       project(route.pointAt((index / samples) * route.totalLength)),

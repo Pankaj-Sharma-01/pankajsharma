@@ -72,6 +72,8 @@ type Part = {
   edge: number;
   /** Rotation about the z axis, for sagging cables and tilted dishes. */
   tilt: number;
+  /** Rotation about the vertical axis, for parts that follow a curve. */
+  yaw: number;
 };
 
 const vertexShader = /* glsl */ `
@@ -193,46 +195,32 @@ const fragmentShader = /* glsl */ `
 `;
 
 export type StreetLotOptions = {
-  /** Street runs from local z = `from` down to `to` (from > to). */
+  /** Lots run from local z = `from` down to `to` (from > to). */
   from: number;
   to: number;
-  /** Rows of blocks back from the street: [left side, right side]. */
-  columns: readonly [number, number];
-  /**
-   * Corners where this street meets a perpendicular one. On `side`, the
-   * block beside the corner is shared with that other street, so each keeps
-   * only the plots nearer to itself (split along the diagonal).
-   */
-  sharedCorners: readonly { z: number; side: -1 | 1 }[];
-  /** Side whose rows carry on a little past `to`, to back the scene behind a landmark. */
-  extendPast: -1 | 0 | 1;
+  /** Rows of blocks back from the street, on each side. */
+  columns: number;
 };
 
 const BLOCK = 14;
-const EXTENSION = 50;
 
-/** City blocks lining one street. */
+/**
+ * City blocks lining one street, in street-local coordinates. Where streets
+ * meet or run close, the caller drops any lot that collides with another
+ * street, a landmark, or a lot already placed.
+ */
 export function streetLots(random: Random, options: StreetLotOptions): Lot[] {
   const lots: Lot[] = [];
-  const sides = [-1, 1] as const;
-  for (const side of sides) {
-    const maxColumns = options.columns[side === -1 ? 0 : 1];
-    const end = side === options.extendPast ? options.to - EXTENSION : options.to;
-    for (let z = options.from; z > end; z -= BLOCK) {
-      // Past the street's end only a few rows are needed.
-      const columns = z < options.to ? Math.min(maxColumns, 3) : maxColumns;
-      for (let column = 0; column < columns; column++) {
+  for (const side of [-1, 1] as const) {
+    for (let z = options.from; z > options.to; z -= BLOCK) {
+      for (let column = 0; column < options.columns; column++) {
         const width = 6 + random() * 6;
         const depth = 6 + random() * 6;
         // Taller further from the street: the skyline rises behind it.
         const height = 6 + random() * (18 + (column / 7) * 75) + (random() < 0.06 ? 60 : 0);
         const lateral = BUILDING_SETBACK + column * BLOCK + BLOCK / 2 + (random() - 0.5) * 3;
-        const lotZ = Math.max(z + (random() - 0.5) * 3, end + depth / 2);
+        const lotZ = Math.max(z + (random() - 0.5) * 3, options.to + depth / 2);
         if (random() < 0.12) continue;
-        const shared = options.sharedCorners.some(
-          (corner) => corner.side === side && Math.abs(lotZ - corner.z) < lateral + 7,
-        );
-        if (shared) continue;
         lots.push({ x: side * lateral, z: lotZ, width, depth, height, baseY: 0, side, row: column });
       }
     }
@@ -243,6 +231,8 @@ export function streetLots(random: Random, options: StreetLotOptions): Lot[] {
 export class CityBuilder {
   readonly parts: Part[] = [];
   readonly anchors: SignAnchor[] = [];
+  /** Added to everything placed with box(), e.g. to stand a design on a podium. */
+  offset = { x: 0, y: 0, z: 0 };
 
   constructor(
     readonly random: Random,
@@ -262,8 +252,23 @@ export class CityBuilder {
     neon: number,
     edge = 0.5,
     tilt = 0,
+    yaw = 0,
   ) {
-    this.parts.push({ x, y: baseY, z, w, h, d, seed: this.random(), style, neon, edge, tilt });
+    const { offset } = this;
+    this.parts.push({
+      x: x + offset.x,
+      y: baseY + offset.y,
+      z: z + offset.z,
+      w,
+      h,
+      d,
+      seed: this.random(),
+      style,
+      neon,
+      edge,
+      tilt,
+      yaw,
+    });
   }
 
   neon() {
@@ -668,10 +673,12 @@ export class CityBuilder {
     const position = new THREE.Vector3();
     const rotation = new THREE.Quaternion();
     const scale = new THREE.Vector3();
+    const yAxis = new THREE.Vector3(0, 1, 0);
     const zAxis = new THREE.Vector3(0, 0, 1);
+    const tilt = new THREE.Quaternion();
     this.parts.forEach((part, index) => {
       position.set(part.x, part.y, part.z);
-      rotation.setFromAxisAngle(zAxis, part.tilt);
+      rotation.setFromAxisAngle(yAxis, part.yaw).multiply(tilt.setFromAxisAngle(zAxis, part.tilt));
       scale.set(part.w, part.h, part.d);
       mesh.setMatrixAt(index, matrix.compose(position, rotation, scale));
     });
